@@ -35,7 +35,7 @@ void cjson_array_free(CJsonArray* this) {
     free(this);
 }
 
-CJsonArray* cjson_array_copy(const CJsonArray* const this) {
+CJsonArray* cjson_array_copy(CJsonArray* this) {
     CJsonArray* array = (CJsonArray*) malloc(sizeof(CJsonArray));
     CJSON_CHECK_ALLOC(array);
     array->_size = this->_size;
@@ -48,15 +48,15 @@ CJsonArray* cjson_array_copy(const CJsonArray* const this) {
     return array;
 }
 
-size_t cjson_array_size(const CJsonArray* const this) {
+size_t cjson_array_size(CJsonArray* this) {
     return this->_size;
 }
 
-size_t cjson_array_capacity(const CJsonArray* const this) {
+size_t cjson_array_capacity(CJsonArray* this) {
     return this->_capacity;
 }
 
-bool cjson_array_empty(const CJsonArray* const this) {
+bool cjson_array_empty(CJsonArray* this) {
     return this->_size == 0;
 }
 
@@ -91,7 +91,7 @@ void cjson_array_clear(CJsonArray* this) {
     this->_size = 0;
 }
 
-bool cjson_array_equals(const CJsonArray* this, const CJsonArray* other) {
+bool cjson_array_equals(CJsonArray* this, CJsonArray* other) {
     if(this->_size != other->_size) { return false; }
     for(size_t i = 0; i != this->_size; ++i) {
         const CJsonValue* this_value = this->_data[i];
@@ -146,7 +146,7 @@ void cjson_array_pop(CJsonArray* this) {
     cjson_array_erase(this, this->_size - 1);
 }
 
-void cjson_array_fmt(CJsonStringStream* stream, const CJsonArray* const this) {
+void cjson_array_fmt(CJsonStringStream* stream, CJsonArray* this) {
     cjson_string_stream_write(stream, "[");
     for(size_t i = 0; i != this->_size; ++i) {
         cjson_value_fmt(stream, this->_data[i]);
@@ -157,11 +157,11 @@ void cjson_array_fmt(CJsonStringStream* stream, const CJsonArray* const this) {
     cjson_string_stream_write(stream, "]");
 }
 
-CJsonArray* cjson_impl_array_builder(size_t elems, ...) {
+CJsonArray* cjson_impl_array_builder(size_t items, ...) {
     CJsonArray* array = cjson_array_new();
     va_list ap;
-    va_start(ap, elems);
-    for(size_t i = 0; i < elems; ++i) {
+    va_start(ap, items);
+    for(size_t i = 0; i < items; ++i) {
         CJsonValue* value = va_arg(ap, CJsonValue*);
         cjson_array_push(array, value);
     }
