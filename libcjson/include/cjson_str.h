@@ -39,13 +39,15 @@ char cjson_str_at(const CJsonStr* this, size_t index);
 char cjson_str_front(const CJsonStr* this);
 char cjson_str_back(const CJsonStr* this);
 
+bool cjson_str_contains(const CJsonStr* this, const CJsonStr* other);
+bool cjson_str_contains_raw(const CJsonStr* this, const char* substr);
 CJsonOrdering cjson_str_cmp(const CJsonStr* this, const CJsonStr* other);
 CJsonOrdering cjson_raw_str_cmp(const char* this, const char* other);
 bool cjson_str_equals(const CJsonStr* this, const CJsonStr* other);
 bool cjson_str_equals_raw(const CJsonStr* this, const char* other);
 bool cjson_raw_str_equals(const char* this, const char* other);
 
-const char* const cjson_str_raw(const CJsonStr* this);
+char* cjson_str_raw(const CJsonStr* this);
 
 CJsonStr* cjson_str_concat(const CJsonStr* s1, const CJsonStr* s2);
 

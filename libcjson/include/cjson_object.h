@@ -61,13 +61,27 @@ CJsonObject* cjson_impl_object_builder(size_t kvs, ...);
         !cjson_object_iter_is_end(it_var); \
         it_var = cjson_object_iter_next(it_var))
 
-#define CJSON_OBJECT_FOREACH_KV(obj, key_var, val_var) \
+#define CJSON_OBJECT_FOREACH_ITEM(obj, key_var, val_var) \
     CJsonObjectIterator CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_begin(obj); \
     char* key_var = cjson_object_iter_get_key(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
     CJsonValue* val_var = cjson_object_iter_get_value(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
     for(; !cjson_object_iter_is_end(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
         CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_next(CJSON_IMPL_OBJECT_ITERATOR_NAME), \
         key_var = cjson_object_iter_get_key(CJSON_IMPL_OBJECT_ITERATOR_NAME), \
+        val_var = cjson_object_iter_get_value(CJSON_IMPL_OBJECT_ITERATOR_NAME))
+
+#define CJSON_OBJECT_FOREACH_KEY(obj, key_var) \
+    CJsonObjectIterator CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_begin(obj); \
+    char* key_var = cjson_object_iter_get_key(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
+    for(; !cjson_object_iter_is_end(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
+        CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_next(CJSON_IMPL_OBJECT_ITERATOR_NAME), \
+        key_var = cjson_object_iter_get_key(CJSON_IMPL_OBJECT_ITERATOR_NAME))
+
+#define CJSON_OBJECT_FOREACH_VALUE(obj, val_var) \
+    CJsonObjectIterator CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_begin(obj); \
+    CJsonValue* val_var = cjson_object_iter_get_value(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
+    for(; !cjson_object_iter_is_end(CJSON_IMPL_OBJECT_ITERATOR_NAME); \
+        CJSON_IMPL_OBJECT_ITERATOR_NAME = cjson_object_iter_next(CJSON_IMPL_OBJECT_ITERATOR_NAME), \
         val_var = cjson_object_iter_get_value(CJSON_IMPL_OBJECT_ITERATOR_NAME))
 
 #endif /* cjson_object_h */

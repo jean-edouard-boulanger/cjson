@@ -163,6 +163,150 @@ START_TEST(test_not_equals_extra_key) {
     cjson_object_free(obj2);
 }
 
+START_TEST(test_foreach) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2"),
+        "key3", CJSON_STR_V("value3")
+    );
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonStringStream* stream = cjson_string_stream_new();
+    ck_assert_ptr_nonnull(stream);
+
+    size_t loops = 0;
+    CJSON_OBJECT_FOREACH(obj, it) {
+        ck_assert_ptr_nonnull(it);
+        ck_assert(!cjson_object_iter_is_end(it));
+
+        const char* key = cjson_object_iter_get_key(it);
+        ck_assert_ptr_nonnull(key);
+        ck_assert(cjson_object_has(obj, key));
+
+        CJsonValue* value = cjson_object_iter_get_value(it);
+        ck_assert_ptr_nonnull(value);
+
+        cjson_string_stream_write(stream, key);
+        cjson_string_stream_write(stream, "=");
+        cjson_string_stream_write(stream, CJSON_AS_RAW_STR(value));
+        cjson_string_stream_write(stream, "/");
+
+        loops++;
+    }
+
+    ck_assert_int_eq(loops, cjson_object_size(obj));
+    char* buff = cjson_string_stream_str(stream);
+
+    ck_assert_ptr_nonnull(strstr(buff, "key1=value1/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key2=value2/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key3=value3/"));
+
+    cjson_object_free(obj);
+    free(buff);
+}
+
+START_TEST(test_foreach_item) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2"),
+        "key3", CJSON_STR_V("value3")
+    );
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonStringStream* stream = cjson_string_stream_new();
+    ck_assert_ptr_nonnull(stream);
+
+    size_t loops = 0;
+    CJSON_OBJECT_FOREACH_ITEM(obj, key, val) {
+        ck_assert_ptr_nonnull(key);
+        ck_assert_ptr_nonnull(val);
+
+        ck_assert(cjson_object_has(obj, key));
+
+        cjson_string_stream_write(stream, key);
+        cjson_string_stream_write(stream, "=");
+        cjson_string_stream_write(stream, CJSON_AS_RAW_STR(val));
+        cjson_string_stream_write(stream, "/");
+
+        loops++;
+    }
+
+    ck_assert_int_eq(loops, cjson_object_size(obj));
+    char* buff = cjson_string_stream_str(stream);
+
+    ck_assert_ptr_nonnull(strstr(buff, "key1=value1/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key2=value2/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key3=value3/"));
+
+    cjson_object_free(obj);
+    free(buff);
+}
+
+START_TEST(test_foreach_key) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2"),
+        "key3", CJSON_STR_V("value3")
+    );
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonStringStream* stream = cjson_string_stream_new();
+    ck_assert_ptr_nonnull(stream);
+
+    size_t loops = 0;
+    CJSON_OBJECT_FOREACH_KEY(obj, key) {
+        ck_assert_ptr_nonnull(key);
+        ck_assert(cjson_object_has(obj, key));
+
+        cjson_string_stream_write(stream, key);
+        cjson_string_stream_write(stream, "/");
+
+        loops++;
+    }
+
+    ck_assert_int_eq(loops, cjson_object_size(obj));
+    char* buff = cjson_string_stream_str(stream);
+
+    ck_assert_ptr_nonnull(strstr(buff, "key1/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key2/"));
+    ck_assert_ptr_nonnull(strstr(buff, "key3/"));
+
+    cjson_object_free(obj);
+    free(buff);
+}
+
+START_TEST(test_foreach_value) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2"),
+        "key3", CJSON_STR_V("value3")
+    );
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonStringStream* stream = cjson_string_stream_new();
+    ck_assert_ptr_nonnull(stream);
+
+    size_t loops = 0;
+    CJSON_OBJECT_FOREACH_VALUE(obj, value) {
+        ck_assert_ptr_nonnull(value);
+
+        cjson_string_stream_write(stream, CJSON_AS_RAW_STR(value));
+        cjson_string_stream_write(stream, "/");
+
+        loops++;
+    }
+
+    ck_assert_int_eq(loops, cjson_object_size(obj));
+    char* buff = cjson_string_stream_str(stream);
+
+    ck_assert_ptr_nonnull(strstr(buff, "value1/"));
+    ck_assert_ptr_nonnull(strstr(buff, "value2/"));
+    ck_assert_ptr_nonnull(strstr(buff, "value3/"));
+
+    cjson_object_free(obj);
+    free(buff);
+}
+
 void object_case_setup(Suite* suite) {
     TCase* object_case = tcase_create("object");
     suite_add_tcase(suite, object_case);
@@ -176,4 +320,8 @@ void object_case_setup(Suite* suite) {
     tcase_add_test(object_case, test_del);
     tcase_add_test(object_case, test_equals);
     tcase_add_test(object_case, test_not_equals_extra_key);
+    tcase_add_test(object_case, test_foreach);
+    tcase_add_test(object_case, test_foreach_item);
+    tcase_add_test(object_case, test_foreach_key);
+    tcase_add_test(object_case, test_foreach_value);
 }

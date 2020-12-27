@@ -6,7 +6,7 @@
 
 #define tcase_add_test_abort(x, y) tcase_add_test_raise_signal(x, y, ABORT_SIGNAL)
 
-#define ck_assert_not(x) ck_assert(!(x));
+#define ck_assert_not(x) ck_assert(!(x))
 
 #define START_GOOD_READ_TEST(name, input_value, expected_value) \
     START_TEST(name) { \

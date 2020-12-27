@@ -140,7 +140,7 @@ void cjson_raw_str_fmt(CJsonStringStream* stream, const char* const str) {
     cjson_string_stream_write(stream, "\"");
 }
 
-const char* const cjson_str_raw(const CJsonStr* const this) {
+char* cjson_str_raw(const CJsonStr* const this) {
     return this->_data;
 }
 
@@ -157,4 +157,12 @@ char cjson_str_front(const CJsonStr* const this) {
 char cjson_str_back(const CJsonStr* const this) {
     CJSON_ASSERT(this->_size > 0);
     return this->_data[this->_size - 1];
+}
+
+bool cjson_str_contains_raw(const CJsonStr* this, const char* substr) {
+    return strstr(this->_data, substr) != NULL;
+}
+
+bool cjson_str_contains(const CJsonStr* this, const CJsonStr* other) {
+    return cjson_str_contains_raw(this, other->_data);
 }

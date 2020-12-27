@@ -224,6 +224,36 @@ START_TEST(test_equals_raw) {
     cjson_str_free(s1);
 }
 
+START_TEST(test_contains_raw) {
+    CJsonStr* s1 = cjson_str_new_from_raw("hello");
+    ck_assert_ptr_nonnull(s1);
+    ck_assert_not(cjson_str_contains_raw(s1, "world"));
+    ck_assert(cjson_str_contains_raw(s1, "hell"));
+    ck_assert(cjson_str_contains_raw(s1, "lo"));
+
+    cjson_str_free(s1);
+}
+
+START_TEST(test_contains) {
+    CJsonStr* s1 = cjson_str_new_from_raw("hello");
+    CJsonStr* s2 = cjson_str_new_from_raw("hell");
+    CJsonStr* s3 = cjson_str_new_from_raw("lo");
+    CJsonStr* s4 = cjson_str_new_from_raw("world");
+    ck_assert_ptr_nonnull(s1);
+    ck_assert_ptr_nonnull(s2);
+    ck_assert_ptr_nonnull(s3);
+    ck_assert_ptr_nonnull(s4);
+
+    ck_assert_not(cjson_str_contains(s1, s4));
+    ck_assert(cjson_str_contains(s1, s2));
+    ck_assert(cjson_str_contains(s1, s3));
+
+    cjson_str_free(s1);
+    cjson_str_free(s2);
+    cjson_str_free(s3);
+    cjson_str_free(s4);
+}
+
 START_TEST(test_raw_str_equals) {
     ck_assert(cjson_raw_str_equals("hello", "hello"));
     ck_assert_not(cjson_raw_str_equals("hello", "world"));
@@ -276,6 +306,8 @@ void str_case_setup(Suite* suite) {
     tcase_add_test(str_case, test_raw_str_equals);
     tcase_add_test(str_case, test_fmt);
     tcase_add_test(str_case, test_raw_str_fmt);
+    tcase_add_test(str_case, test_contains_raw);
+    tcase_add_test(str_case, test_contains);
 
     tcase_add_test_abort(str_case, test_at_out_of_bounds);
     tcase_add_test_abort(str_case, test_substr_out_of_bounds);

@@ -96,6 +96,7 @@ void cjson_null_fmt(CJsonStringStream* stream);
 #define CJSON_AS_BOOL(v) (cjson_value_get_bool(v))
 #define CJSON_AS_NUMBER(v) (cjson_value_get_number(v))
 #define CJSON_AS_STR(v) (cjson_value_get_str(v))
+#define CJSON_AS_RAW_STR(v) (cjson_str_raw(CJSON_AS_STR(v)))
 #define CJSON_AS_ARRAY(v) (cjson_value_get_array(v))
 #define CJSON_AS_OBJECT(v) (cjson_value_get_object(v))
 

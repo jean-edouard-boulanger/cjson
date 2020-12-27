@@ -121,7 +121,7 @@ void cjson_object_free(CJsonObject* this) {
 
 CJsonObject* cjson_object_copy(CJsonObject* this) {
     CJsonObject* new_obj = cjson_object_new();
-    CJSON_OBJECT_FOREACH_KV(this, key, val) {
+    CJSON_OBJECT_FOREACH_ITEM(this, key, val) {
         cjson_object_set(new_obj, key, cjson_value_copy(val));
     }
     return new_obj;
@@ -224,7 +224,7 @@ bool cjson_object_equals(CJsonObject* this, CJsonObject* other) {
     if(cjson_object_size(this) != cjson_object_size(other)) {
         return false;
     }
-    CJSON_OBJECT_FOREACH_KV(this, key, val) {
+    CJSON_OBJECT_FOREACH_ITEM(this, key, val) {
         CJsonValue* other_val = cjson_object_get(other, key);
         if(other_val == NULL || !cjson_value_equals(val, other_val)) {
             return false;
