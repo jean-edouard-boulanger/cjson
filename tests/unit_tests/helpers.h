@@ -1,7 +1,6 @@
 #include <cjson_stringstream.h>
 #include <cjson_value.h>
 
-
 #define ABORT_SIGNAL 6
 
 #define tcase_add_test_abort(x, y) tcase_add_test_raise_signal(x, y, ABORT_SIGNAL)
@@ -38,3 +37,5 @@
             ck_abort_msg("%s", cjson_string_stream_str(stream)); \
         } \
     }
+
+#define RAW_JSON(...) #__VA_ARGS__

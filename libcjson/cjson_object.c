@@ -100,6 +100,10 @@ CJsonObjectNode* cjson_impl_object_end_marker_new() {
     return cjson_object_node_new("", NULL, NULL);
 }
 
+size_t cjson_impl_object_get_block(CJsonObject* this, const char* key) {
+    return hash_func(key) % this->_slots;
+}
+
 CJsonObject* cjson_object_new() {
     CJsonObject* obj = (CJsonObject*) malloc(sizeof(CJsonObject));
     obj->_slots = k_default_hash_table_size;
@@ -107,7 +111,7 @@ CJsonObject* cjson_object_new() {
     for(size_t i = 0; i != obj->_slots; ++i) {
         obj->_data[i] = NULL;
     }
-    obj->_data[obj->_slots + 1] = cjson_impl_object_end_marker_new();
+    obj->_data[obj->_slots] = cjson_impl_object_end_marker_new();
     return obj;
 }
 
@@ -128,7 +132,7 @@ CJsonObject* cjson_object_copy(CJsonObject* this) {
 }
 
 void cjson_object_set(CJsonObject* this, const char* key, CJsonValue* val) {
-    const size_t slot = hash_func(key) % this->_slots;
+    const size_t slot = cjson_impl_object_get_block(this, key);
     CJsonObjectNode* obj = this->_data[slot];
     if(obj == NULL) {
         this->_data[slot] = cjson_object_node_new(key, val, this->_data + slot);
@@ -138,7 +142,7 @@ void cjson_object_set(CJsonObject* this, const char* key, CJsonValue* val) {
 }
 
 void cjson_object_del(CJsonObject* this, const char* const key) {
-    const size_t slot = hash_func(key) % this->_slots;
+    const size_t slot = cjson_impl_object_get_block(this, key);
     CJsonObjectNode* obj = this->_data[slot];
     if(obj == NULL) { return; }
     if(cjson_raw_str_cmp(obj->key, key) == cjson_ordering_equal) {
@@ -157,7 +161,7 @@ void cjson_object_del(CJsonObject* this, const char* const key) {
 }
 
 CJsonValue* cjson_object_get(CJsonObject* this, const char* const key) {
-    const size_t slot = hash_func(key) % this->_slots;
+    const size_t slot = cjson_impl_object_get_block(this, key);
     CJsonObjectNode* node = cjson_object_node_find(this->_data[slot], key);
     if(node == NULL) {
         return NULL;
@@ -166,7 +170,7 @@ CJsonValue* cjson_object_get(CJsonObject* this, const char* const key) {
 }
 
 bool cjson_object_has(CJsonObject* this, const char* const key) {
-    const size_t slot = hash_func(key) % this->_slots;
+    const size_t slot = cjson_impl_object_get_block(this, key);
     CJsonObjectNode* node = cjson_object_node_find(this->_data[slot], key);
     return node != NULL;
 }
@@ -190,7 +194,7 @@ CJsonObjectIterator cjson_object_iter_begin(CJsonObject* this) {
 }
 
 CJsonObjectIterator cjson_object_iter_end(CJsonObject* this) {
-    CJsonObjectNode* end_marker = this->_data[this->_slots + 1];
+    CJsonObjectNode* end_marker = this->_data[this->_slots];
     CJSON_ASSERT(cjson_impl_object_is_end_marker(end_marker));
     return end_marker;
 }
@@ -237,10 +241,10 @@ void cjson_object_fmt(CJsonStringStream* stream, CJsonObject* this) {
     cjson_string_stream_write(stream, "{");
     CJsonObjectIterator it = cjson_object_iter_begin(this);
     while(!cjson_object_iter_is_end(it)) {
-        it = cjson_object_iter_next(it);
         cjson_raw_str_fmt(stream, it->key);
         cjson_string_stream_write(stream, ": ");
         cjson_value_fmt(stream, it->val);
+        it = cjson_object_iter_next(it);
         if(!cjson_object_iter_is_end(it)) {
             cjson_string_stream_write(stream, ", ");
         }
