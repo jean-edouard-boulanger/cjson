@@ -1,0 +1,4 @@
+.idea/
+JSONTestSuite/
+cmake-build*/
+*.o

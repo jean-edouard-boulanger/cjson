@@ -1,0 +1,130 @@
+//
+// Created by Jean-Edouard BOULANGER on 27/12/2020.
+//
+
+#include "test_object.h"
+
+#include <cjson_object.h>
+#include <cjson_value.h>
+#include <cjson_str.h>
+
+
+START_TEST(test_new) {
+    CJsonObject* obj = cjson_object_new();
+    ck_assert_ptr_nonnull(obj);
+    ck_assert_int_eq(cjson_object_size(obj), 0);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_new_dsl) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_TRUE_V
+    );
+    ck_assert_ptr_nonnull(obj);
+    ck_assert_int_eq(cjson_object_size(obj), 2);
+
+    ck_assert(cjson_object_has(obj, "key1"));
+    CJsonValue* val1 = cjson_object_get(obj, "key1");
+    ck_assert(cjson_value_is_str(val1));
+    ck_assert_str_eq(cjson_str_raw(CJSON_AS_STR(val1)), "value1");
+
+    ck_assert(cjson_object_has(obj, "key2"));
+    CJsonValue* val2 = cjson_object_get(obj, "key2");
+    ck_assert(cjson_value_is_bool(val2));
+    ck_assert(*CJSON_AS_BOOL(val2) == true);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_set_get) {
+    CJsonObject* obj = cjson_object_new();
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonValue* val0 = cjson_object_get(obj, "missing");
+    ck_assert(val0 == NULL);
+
+    CJsonValue* val1 = CJSON_STR_V("world");
+    cjson_object_set(obj, "hello", val1);
+
+    ck_assert_int_eq(cjson_object_size(obj), 1);
+    CJsonValue* val1_ref = cjson_object_get(obj, "hello");
+    ck_assert_ptr_nonnull(val1_ref);
+    ck_assert(val1 == val1_ref);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_set_get_overwrite) {
+    CJsonObject* obj = cjson_object_new();
+    ck_assert_ptr_nonnull(obj);
+
+    CJsonValue* val1 = CJSON_STR_V("json");
+    CJsonValue* val2 = CJSON_STR_V("yaml");
+
+    cjson_object_set(obj, "key", val1);
+    cjson_object_set(obj, "key", val2);
+
+    ck_assert(cjson_object_get(obj, "key") != val1);
+    ck_assert(cjson_object_get(obj, "key") == val2);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_has) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2")
+    );
+
+    ck_assert(cjson_object_has(obj, "key1"));
+    ck_assert(cjson_object_has(obj, "key2"));
+    ck_assert(cjson_object_has(obj, "key3") == false);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_size) {
+    CJsonObject* obj = cjson_object_new();
+    ck_assert_ptr_nonnull(obj);
+    ck_assert_int_eq(cjson_object_size(obj), 0);
+
+    cjson_object_set(obj, "key1", CJSON_STR_V("val"));
+    ck_assert_int_eq(cjson_object_size(obj), 1);
+
+    cjson_object_set(obj, "key2", CJSON_STR_V("val"));
+    ck_assert_int_eq(cjson_object_size(obj), 2);
+
+    cjson_object_set(obj, "key2", CJSON_STR_V("val"));
+    ck_assert_int_eq(cjson_object_size(obj), 2);
+
+    cjson_object_set(obj, "key3", CJSON_STR_V("val"));
+    ck_assert_int_eq(cjson_object_size(obj), 3);
+
+    cjson_object_free(obj);
+}
+
+START_TEST(test_del) {
+    CJsonObject* obj = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2")
+    );
+    cjson_object_del(obj, "key1");
+    ck_assert(cjson_object_has(obj, "key1") == false);
+
+    cjson_object_free(obj);
+}
+
+void object_case_setup(Suite* suite) {
+    TCase* object_case = tcase_create("object");
+    suite_add_tcase(suite, object_case);
+
+    tcase_add_test(object_case, test_new);
+    tcase_add_test(object_case, test_new_dsl);
+    tcase_add_test(object_case, test_size);
+    tcase_add_test(object_case, test_set_get);
+    tcase_add_test(object_case, test_set_get_overwrite);
+    tcase_add_test(object_case, test_has);
+    tcase_add_test(object_case, test_del);
+}
