@@ -2,6 +2,7 @@
 // Created by Jean-Edouard BOULANGER on 27/12/2020.
 //
 
+#include "helpers.h"
 #include "test_object.h"
 
 #include <cjson_object.h>
@@ -78,9 +79,10 @@ START_TEST(test_has) {
         "key2", CJSON_STR_V("value2")
     );
 
+    ck_assert_ptr_nonnull(obj);
+    ck_assert_not(cjson_object_has(obj, "key3"));
     ck_assert(cjson_object_has(obj, "key1"));
     ck_assert(cjson_object_has(obj, "key2"));
-    ck_assert(cjson_object_has(obj, "key3") == false);
 
     cjson_object_free(obj);
 }
@@ -110,10 +112,55 @@ START_TEST(test_del) {
         "key1", CJSON_STR_V("value1"),
         "key2", CJSON_STR_V("value2")
     );
+    ck_assert_ptr_nonnull(obj);
+
     cjson_object_del(obj, "key1");
-    ck_assert(cjson_object_has(obj, "key1") == false);
+    ck_assert_not(cjson_object_has(obj, "key1"));
+    ck_assert(cjson_object_has(obj, "key2"));
+
+    cjson_object_del(obj, "key3");
+    ck_assert(cjson_object_has(obj, "key2"));
 
     cjson_object_free(obj);
+}
+
+START_TEST(test_equals) {
+    CJsonObject* obj1 = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2")
+    );
+    ck_assert_ptr_nonnull(obj1);
+
+    CJsonObject* obj2 = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2")
+    );
+    ck_assert_ptr_nonnull(obj2);
+
+    ck_assert(cjson_object_equals(obj1, obj2));
+
+    cjson_object_free(obj1);
+    cjson_object_free(obj2);
+}
+
+START_TEST(test_not_equals_extra_key) {
+    CJsonObject* obj1 = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2")
+    );
+    ck_assert_ptr_nonnull(obj1);
+
+    CJsonObject* obj2 = CJSON_OBJECT(
+        "key1", CJSON_STR_V("value1"),
+        "key2", CJSON_STR_V("value2"),
+        "key3", CJSON_STR_V("value3")
+    );
+    ck_assert_ptr_nonnull(obj2);
+
+    ck_assert_not(cjson_object_equals(obj1, obj2));
+
+    cjson_object_free(obj1);
+    cjson_object_free(obj2);
 }
 
 void object_case_setup(Suite* suite) {
@@ -127,4 +174,6 @@ void object_case_setup(Suite* suite) {
     tcase_add_test(object_case, test_set_get_overwrite);
     tcase_add_test(object_case, test_has);
     tcase_add_test(object_case, test_del);
+    tcase_add_test(object_case, test_equals);
+    tcase_add_test(object_case, test_not_equals_extra_key);
 }

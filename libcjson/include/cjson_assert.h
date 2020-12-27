@@ -15,24 +15,28 @@
 #ifdef CJSON_ENABLE_STACKTRACE
 #define CJSON_DEBUG_STACKTRACE cjson_impl_print_stacktrace()
 #else
-#define CJSON_DEBUG_STACKTRACE
+#define CJSON_DEBUG_STACKTRACE do {} while(false)
 #endif
 
-#define CJSON_ABORT(msg) \
-    fprintf(stderr, msg); \
-    CJSON_DEBUG_STACKTRACE \
-    abort();
+#define CJSON_ABORT(...) \
+    do { \
+        fprintf(stderr, __VA_ARGS__); \
+        CJSON_DEBUG_STACKTRACE; \
+        abort(); \
+    } while (false)
 
 #define CJSON_ASSERT_MSG(x, m) \
     do { \
         if(!(x)) { \
-            CJSON_ABORT(m ": " #x "\n"); \
+            CJSON_ABORT("%s: %s\n", m, #x); \
         } \
     } while (false)
 
 #define CJSON_ASSERT(x) CJSON_ASSERT_MSG(x, "assertion failed")
 
 #define CJSON_CHECK_ALLOC(x) CJSON_ASSERT_MSG(x != NULL, "bad alloc")
+
+#define CJSON_NOT_IMPLEMENTED CJSON_ABORT("not implemented: %s\n", __func__)
 
 #define CJSON_STATIC_ASSERT(x) _Static_assert(x, "static assertion failed: " #x)
 

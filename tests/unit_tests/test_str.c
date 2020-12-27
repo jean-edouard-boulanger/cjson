@@ -201,12 +201,14 @@ START_TEST(test_equals) {
     CJsonStr* s1 = cjson_str_new_from_raw("hello");
     CJsonStr* s2 = cjson_str_new_from_raw("hello");
     CJsonStr* s3 = cjson_str_new_from_raw("world");
+
     ck_assert_ptr_nonnull(s1);
     ck_assert_ptr_nonnull(s2);
     ck_assert_ptr_nonnull(s3);
+
+    ck_assert_not(cjson_str_equals(s2, s3));
     ck_assert(cjson_str_equals(s1, s1));
     ck_assert(cjson_str_equals(s1, s2));
-    ck_assert(cjson_str_equals(s2, s3) == false);
 
     cjson_str_free(s1);
     cjson_str_free(s2);
@@ -217,14 +219,14 @@ START_TEST(test_equals_raw) {
     CJsonStr* s1 = cjson_str_new_from_raw("hello");
     ck_assert_ptr_nonnull(s1);
     ck_assert(cjson_str_equals_raw(s1, "hello"));
-    ck_assert(cjson_str_equals_raw(s1, "world") == false);
+    ck_assert_not(cjson_str_equals_raw(s1, "world"));
 
     cjson_str_free(s1);
 }
 
 START_TEST(test_raw_str_equals) {
     ck_assert(cjson_raw_str_equals("hello", "hello"));
-    ck_assert(cjson_raw_str_equals("hello", "world") == false);
+    ck_assert_not(cjson_raw_str_equals("hello", "world"));
 }
 
 START_TEST(test_fmt) {

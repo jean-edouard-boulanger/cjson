@@ -86,9 +86,10 @@ void cjson_null_fmt(CJsonStringStream* stream);
 #define CJSON_FALSE_V CJSON_BOOL_V(false)
 #define CJSON_NUMBER_V(x) (cjson_value_new_as_number(x))
 #define CJSON_STR_V(x) (cjson_value_new_as_str(CJSON_STR(x)))
-#define CJSON_EMPTY_ARRAY_V cjson_value_new_as_array(CJSON_EMPTY_ARRAY)
+#define CJSON_EMPTY_ARRAY_V (cjson_value_new_as_array(CJSON_EMPTY_ARRAY))
 #define CJSON_ARRAY_V(...)\
     (cjson_value_new_as_array(CJSON_ARRAY(__VA_ARGS__)))
+#define CJSON_EMPTY_OBJECT_V (cjson_value_new_as_object(CJSON_EMPTY_OBJECT))
 #define CJSON_OBJECT_V(...)\
     (cjson_value_new_as_object(CJSON_OBJECT(__VA_ARGS__)))
 

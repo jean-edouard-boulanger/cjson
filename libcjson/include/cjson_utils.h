@@ -13,7 +13,10 @@
 
 #define CJSON_NUMARGS(...) (sizeof((void*[]){__VA_ARGS__})/sizeof(void*))
 
+#define CJSON_COMBINE(x, y) x ## y
+
 #define CJSON_MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 #define CJSON_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 int cjson_mod(int x, int n);

@@ -88,11 +88,14 @@ void reader_case_setup(Suite* suite) {
     tcase_add_test(reader_case, test_good_lonely_string);
     tcase_add_test(reader_case, test_good_lonely_empty_string);
     tcase_add_test(reader_case, test_good_lonely_float_number);
+    tcase_add_test(reader_case, test_good_lonely_positive_integer);
     tcase_add_test(reader_case, test_good_lonely_negative_float_number);
+    tcase_add_test(reader_case, test_good_lonely_number_exponent);
     tcase_add_test(reader_case, test_good_empty_array);
     tcase_add_test(reader_case, test_good_array_of_mixed_primitives);
     tcase_add_test(reader_case, test_good_nested_arrays);
 
     tcase_add_test(reader_case, test_bad_lonely_string);
     tcase_add_test(reader_case, test_array_missing_right_bracket);
+    tcase_add_test(reader_case, test_array_trailing_comma);
 }
