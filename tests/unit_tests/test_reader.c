@@ -81,6 +81,26 @@ START_GOOD_READ_TEST(test_good_array_with_lonely_null,
     RAW_JSON([null]),
     CJSON_ARRAY_V(CJSON_NULL_V)
 )
+START_GOOD_READ_TEST(test_good_array_with_strings_only,
+    RAW_JSON([
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ]),
+    CJSON_ARRAY_V(
+        CJSON_STR_V("Sunday"),
+        CJSON_STR_V("Monday"),
+        CJSON_STR_V("Tuesday"),
+        CJSON_STR_V("Wednesday"),
+        CJSON_STR_V("Thursday"),
+        CJSON_STR_V("Friday"),
+        CJSON_STR_V("Saturday")
+    )
+)
 START_GOOD_READ_TEST(test_good_array_of_mixed_primitives_only,
     RAW_JSON([
         -10.0,
@@ -237,6 +257,7 @@ void reader_case_setup(Suite* suite) {
     tcase_add_test(reader_case, test_good_array_with_lonely_true);
     tcase_add_test(reader_case, test_good_array_with_lonely_false);
     tcase_add_test(reader_case, test_good_array_with_lonely_null);
+    tcase_add_test(reader_case, test_good_array_with_strings_only);
     tcase_add_test(reader_case, test_good_array_of_mixed_primitives_only);
     tcase_add_test(reader_case, test_good_array_of_mixed_items);
     tcase_add_test(reader_case, test_good_nested_arrays);

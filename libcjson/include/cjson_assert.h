@@ -12,11 +12,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#ifdef CJSON_ENABLE_STACKTRACE
+#ifndef CJSON_ENABLE_STACKTRACE
 #define CJSON_DEBUG_STACKTRACE cjson_impl_print_stacktrace()
 #else
 #define CJSON_DEBUG_STACKTRACE do {} while(false)
 #endif
+
+#define CJSON_TRACE \
+    do { \
+        fprintf(stderr, "trace (%s:%d)", __FILE__, __LINE__); \
+        CJSON_DEBUG_STACKTRACE; \
+    } while(false)
 
 #define CJSON_ABORT(...) \
     do { \

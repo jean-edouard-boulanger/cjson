@@ -7,12 +7,6 @@
 #include "cjson.h"
 
 
-char* get_data(const char* const path) {
-    int fd = open("/Users/jboulanger/Desktop/test.json", O_RDONLY);
-    off_t len = lseek(fd, 0, SEEK_END);
-    return mmap(0, len, PROT_READ, MAP_PRIVATE, fd, 0);
-}
-
 int main(int argc, char** argv) {
     if(argc != 2) {
         fprintf(stderr, "usage: %s <json file path>\n", argv[1]);
@@ -40,6 +34,6 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    cjson_print(value);
+    //cjson_print(value);
     return close(fd);
 }

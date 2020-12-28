@@ -47,10 +47,14 @@ CJsonStr* cjson_str_copy(const CJsonStr* const this) {
     return str;
 }
 
+char* cjson_raw_str_copy(const char* this) {
+    char* buffer = (char*) malloc((strlen(this) + 1) * sizeof(char));
+    strcpy(buffer, this);
+    return buffer;
+}
+
 void cjson_str_free(CJsonStr* this) {
-    if(this->_data != NULL) {
-        cjson_str_clear(this);
-    }
+    cjson_str_clear(this);
     free(this);
 }
 

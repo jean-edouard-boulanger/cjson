@@ -7,37 +7,77 @@
 //
 
 #include "cjson_array.h"
-#include "cjson_assert.h"
 #include "cjson_object.h"
 #include "cjson_reader.h"
 #include "cjson_str.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <ctype.h>
 
 
-bool is_digit(char c) {
-    return c >= '0' && c <= '9';
-}
+const size_t k_default_buffer_size = 16384;
+
+const char PUNCTUATION_TOKEN_MAP[] = {
+ /* 000 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 016 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 032 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 10,  0,  0,  0,
+ /* 048 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 11,  0,  0,  0,  0,  0,
+ /* 064 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 080 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  0,  9,  0,  0,
+ /* 096 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 112 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0,  7,  0,  0,
+ /* 128 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 144 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 160 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 176 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 192 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 208 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 224 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 240 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
+
+const char BLANK_TOKEN_MAP[] = {
+ /* 000 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  1,  0,  0,
+ /* 016 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 032 */  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 048 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 064 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 080 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 096 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 112 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 128 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 144 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 160 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 176 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 192 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 208 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 224 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+ /* 240 */  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
 
 typedef enum TokenType {
-    cjson_null_token = 0,
-    cjson_number_token,
-    cjson_str_token,
-    cjson_bool_token,
-    cjson_left_brace_token,
-    cjson_right_brace_token,
-    cjson_left_bracket_token,
-    cjson_right_bracket_token,
-    cjson_comma_token,
-    cjson_colon_token
+    cjson_null_token = 1,
+    cjson_number_token = 2,
+    cjson_str_token = 3,
+    cjson_true_token = 4,
+    cjson_false_token = 5,
+    cjson_left_brace_token = 6,
+    cjson_right_brace_token = 7,
+    cjson_left_bracket_token = 8,
+    cjson_right_bracket_token = 9,
+    cjson_comma_token = 10,
+    cjson_colon_token = 11
 } TokenType;
 
 const char* const TOKEN_NAMES[] = {
+    "BAD_TOKEN",
     "NULL_TOKEN",
     "NUMBER_TOKEN",
     "STR_TOKEN",
-    "BOOL_TOKEN",
+    "TRUE_TOKEN",
+    "FALSE_TOKEN",
     "LEFT_BRACE_TOKEN",
     "RIGHT_BRACE_TOKEN",
     "LEFT_BRACKET_TOKEN",
@@ -52,43 +92,66 @@ typedef struct Token {
     char* end;
 } Token;
 
-Token* token_new(TokenType type, char* data, char* end) {
-    Token* token = (Token*) malloc(sizeof(Token));
-    token->type = type;
-    token->data = data;
-    token->end = end;
-    return token;
-}
-
-void token_free(Token* token) {
-    free(token);
+void token_print(Token* token) {
+    if(token == NULL) {
+        printf("NULL token\n");
+        return;
+    }
+    printf("Token(type=%s, data='%s', end=%p)\n", TOKEN_NAMES[token->type], token->data, token->end);
 }
 
 typedef struct TokenizerContext {
     char* cursor;
+    Token* token;
+    char* buffer;
 } TokenizerContext;
 
-TokenizerContext* tokenizer_new(char* data) {
+TokenizerContext* tokenizer_new(char* data, size_t buffer_sz) {
     TokenizerContext* ctx = (TokenizerContext*) malloc(sizeof(TokenizerContext));
     ctx->cursor = data;
+    ctx->buffer = (char*) malloc(buffer_sz * sizeof(char));
+    memset(ctx->buffer, 0, buffer_sz * sizeof(char));
+    Token* token = (Token*) malloc(sizeof(Token));
+    token->type = cjson_null_token;
+    token->data = ctx->buffer;
+    token->end = ctx->cursor;
+    ctx->token = token;
     return ctx;
 }
 
-void tokenizer_advance_cursor(TokenizerContext* this, size_t bytes) {
-    for(size_t i = 0; i < bytes; ++i) {
-        if(*this->cursor == '\0') {
-            return;
-        }
-        ++this->cursor;
-    }
+void tokenizer_free(TokenizerContext* this) {
+    free(this->token);
+    free(this->buffer);
+    free(this);
 }
 
-bool tokenizer_advance_if_matches(TokenizerContext* this, char* what) {
+void tokenizer_advance(TokenizerContext* this, size_t bytes) {
+    this->cursor += bytes;
+}
+
+Token* tokenizer_make_token(TokenizerContext* this, TokenType type, const char* data, size_t bytes, char* end) {
+    Token* token = this->token;
+    token->type = type;
+    memcpy(this->buffer, data, bytes * sizeof(char));
+    this->buffer[bytes] = '\0';
+    token->end = end;
+    return token;
+}
+
+Token* tokenizer_make_simple_token(TokenizerContext* this, TokenType type, char* end) {
+    Token* token = this->token;
+    token->type = type;
+    this->buffer[0] = '\0';
+    token->end = end;
+    return token;
+}
+
+bool tokenizer_match(TokenizerContext* this, char* what) {
     char* ptr = this->cursor;
     size_t read_bytes = 0;
     for(;;) {
         if(*what == '\0') {
-            tokenizer_advance_cursor(this, read_bytes);
+            tokenizer_advance(this, read_bytes);
             return true;
         }
         if(*what != *ptr) { return false; }
@@ -111,13 +174,10 @@ Token* tokenizer_try_tokenize_string(TokenizerContext* this) {
         }
         else if(c == '"') {
             const size_t read_bytes = (ptr - this->cursor) + 1;
-            CJSON_ASSERT(read_bytes >= 2);
             const size_t str_size = read_bytes - 2;
-            char* buffer = (char*) malloc((str_size + 1) * sizeof(char));
-            buffer[str_size] = '\0';
-            memcpy(buffer, this->cursor + 1, str_size);
-            tokenizer_advance_cursor(this, read_bytes);
-            return token_new(cjson_str_token, buffer, ptr + 1);
+            Token* token = tokenizer_make_token(this, cjson_str_token, this->cursor + 1, str_size, ptr + 1);
+            tokenizer_advance(this, read_bytes);
+            return token;
         }
         else {
             ++ptr;
@@ -129,108 +189,107 @@ Token* tokenizer_try_tokenize_string(TokenizerContext* this) {
 Token* tokenizer_try_tokenize_number(TokenizerContext* this) {
     char* ptr = this->cursor;
     if(*ptr == '-') { ++ptr; }
-    if(!is_digit(*ptr)) { return NULL; }
-    while(is_digit(*ptr)) { ++ptr; }
+    if(!isdigit(*ptr++)) { return NULL; }
+    while(isdigit(*ptr)) { ++ptr; }
     
     if(*ptr == '.') {
         ++ptr;
-        if(!is_digit(*ptr)) {
+        if(!isdigit(*ptr++)) {
             return NULL;
         }
-        while(is_digit(*ptr)) { ++ptr; }
+        while(isdigit(*ptr)) { ++ptr; }
     }
     
     if(*ptr == 'e' || *ptr == 'E') {
         ++ptr;
         if(*ptr == '-' || *ptr == '+') { ++ptr; }
-        if(!is_digit(*ptr)) {
+        if(!isdigit(*ptr++)) {
             return NULL;
         }
-        while(is_digit(*ptr)) { ++ptr; }
+        while(isdigit(*ptr)) { ++ptr; }
     }
 
     const size_t read_bytes = (ptr - this->cursor);
-    char* buffer = (char*) malloc((read_bytes + 1) * sizeof(char));
-    buffer[read_bytes] = '\0';
-    memcpy(buffer, this->cursor, read_bytes);
-    tokenizer_advance_cursor(this, read_bytes);
-    return token_new(cjson_number_token, buffer, this->cursor);
+    Token* token = tokenizer_make_token(this, cjson_number_token, this->cursor, read_bytes, ptr + 1);
+    tokenizer_advance(this, read_bytes);
+    return token;
 }
 
-Token* tokenizer_try_tokenize_bool(TokenizerContext* this) {
-    if(tokenizer_advance_if_matches(this, "true")) {
-        return token_new(cjson_bool_token, "true", this->cursor);
+Token* tokenizer_try_tokenize_true(TokenizerContext* this) {
+    if(tokenizer_match(this, "true")) {
+        return tokenizer_make_simple_token(this, cjson_true_token, this->cursor);
     }
-    if(tokenizer_advance_if_matches(this, "false")) {
-        return token_new(cjson_bool_token, "false", this->cursor);
+    return NULL;
+}
+
+Token* tokenizer_try_tokenize_false(TokenizerContext* this) {
+    if(tokenizer_match(this, "false")) {
+        return tokenizer_make_simple_token(this, cjson_false_token, this->cursor);
     }
     return NULL;
 }
 
 Token* tokenizer_try_tokenize_null(TokenizerContext* this) {
-    if(tokenizer_advance_if_matches(this, "null")) {
-        return token_new(cjson_null_token, "null", this->cursor);
+    if(tokenizer_match(this, "null")) {
+        return tokenizer_make_simple_token(this, cjson_null_token, this->cursor);
     }
     return NULL;
 }
 
 Token* tokenizer_try_tokenize_punctuation(TokenizerContext* this) {
-    Token* token = NULL;
-    char* end = this->cursor + 1;
-    switch(*this->cursor) {
-        case ',': { token = token_new(cjson_comma_token, ",", end); break; }
-        case ':': { token = token_new(cjson_colon_token, ":", end); break; }
-        case '[': { token = token_new(cjson_left_bracket_token, "[", end); break; }
-        case ']': { token = token_new(cjson_right_bracket_token, "]", end); break; }
-        case '{': { token = token_new(cjson_left_brace_token, "{", end); break; }
-        case '}': { token = token_new(cjson_right_brace_token, "}", end); break; }
-        default: return NULL;
+    const int token_type = PUNCTUATION_TOKEN_MAP[(int)*this->cursor];
+    if(token_type == 0) {
+        return NULL;
     }
-    tokenizer_advance_cursor(this, 1);
+    Token* token = tokenizer_make_simple_token(this, (TokenType)token_type, this->cursor + 1);
+    ++this->cursor;
     return token;
 }
 
 void tokenizer_skip_blank(TokenizerContext* this) {
-    for(;;) {
-        char c = *this->cursor;
-        if(c != ' ' && c != '\n' && c != '\t' && c != '\r') {
-            return;
-        }
-        tokenizer_advance_cursor(this, 1);
+    while(BLANK_TOKEN_MAP[(int)(*this->cursor)] == 1) {
+        ++this->cursor;
     }
 }
 
-Token* tokenizer_get_next(TokenizerContext* this) {
-    TokenizerContext new_ctx = {.cursor = this->cursor};
-    
-    tokenizer_skip_blank(&new_ctx);
-    Token* token = NULL;
+Token* tokenizer_consume_next(TokenizerContext* this) {
+    tokenizer_skip_blank(this);
+    char hint = *this->cursor;
 
-    token = tokenizer_try_tokenize_punctuation(&new_ctx);
-    if(token != NULL) { return token; }
+    if(PUNCTUATION_TOKEN_MAP[(int)hint] != 0) {
+        return tokenizer_try_tokenize_punctuation(this);
+    }
 
-    token = tokenizer_try_tokenize_string(&new_ctx);
-    if(token != NULL) { return token; }
+    if(hint == '"') {
+        return tokenizer_try_tokenize_string(this);
+    }
 
-    token = tokenizer_try_tokenize_number(&new_ctx);
-    if(token != NULL) { return token; }
+    if(isdigit(hint) || hint == '-') {
+        return tokenizer_try_tokenize_number(this);
+    }
 
-    token = tokenizer_try_tokenize_bool(&new_ctx);
-    if(token != NULL) { return token; }
+    if(hint == 't') {
+        return tokenizer_try_tokenize_true(this);
+    }
 
-    token = tokenizer_try_tokenize_null(&new_ctx);
-    if(token != NULL) { return token; }
+    if(hint == 'f') {
+        return tokenizer_try_tokenize_false(this);
+    }
+
+    if(hint == 'n') {
+        return tokenizer_try_tokenize_null(this);
+    }
 
     return NULL;
 }
 
-Token* tokenizer_consume_next(TokenizerContext* this) {
-    Token* token = tokenizer_get_next(this);
-    if(token == NULL) {
-        return NULL;
-    }
-    this->cursor = token->end;
-    return token;
+Token* tokenizer_get_next(TokenizerContext* this) {
+    TokenizerContext ctx_copy = {
+        .cursor = this->cursor,
+        .token = this->token,
+        .buffer = this->buffer
+    };
+    return tokenizer_consume_next(&ctx_copy);
 }
 
 void tokenizer_consume_token(TokenizerContext* this, const Token* token) {
@@ -249,14 +308,12 @@ CJsonObject* cjson_read_object(TokenizerContext* ctx) {
         }
 
         if(token->type == cjson_right_brace_token) {
-            token_free(token);
             if(has_trailing_comma) {
                 return NULL;
             }
             return object;
         }
         if(token->type == cjson_comma_token) {
-            token_free(token);
             if(has_trailing_comma) {
                 return NULL;
             }
@@ -264,25 +321,22 @@ CJsonObject* cjson_read_object(TokenizerContext* ctx) {
             continue;
         }
         if(token->type != cjson_str_token) {
-            token_free(token);
             return NULL;
         }
-        const char* key = token->data;
+        char* key = cjson_raw_str_copy(token->data);
         {
             Token* colon_token = tokenizer_consume_next(ctx);
             const TokenType colon_token_type = colon_token->type;
-            token_free(colon_token);
             if(colon_token_type != cjson_colon_token) {
-                token_free(token);
                 return NULL;
             }
         }
         CJsonValue* val = cjson_read_value(ctx);
         if(val == NULL) {
-            token_free(token);
             return NULL;
         }
         cjson_object_set(object, key, val);
+        free(key);
         has_trailing_comma = false;
     }
 }
@@ -295,8 +349,8 @@ CJsonArray* cjson_read_array(TokenizerContext* ctx) {
         if(token == NULL) {
             return NULL;
         }
+
         if(token->type == cjson_right_bracket_token) {
-            token_free(token);
             tokenizer_consume_token(ctx, token);
             if(has_trailing_comma) {
                 return NULL;
@@ -305,14 +359,12 @@ CJsonArray* cjson_read_array(TokenizerContext* ctx) {
         }
         if(token->type == cjson_comma_token) {
             tokenizer_consume_token(ctx, token);
-            token_free(token);
             if(has_trailing_comma) {
                 return NULL;
             }
             has_trailing_comma = true;
             continue;
         }
-        token_free(token);
         CJsonValue* val = cjson_read_value(ctx);
         if(val == NULL) {
             return NULL;
@@ -342,9 +394,12 @@ CJsonValue* cjson_read_value(TokenizerContext* ctx) {
             value = cjson_value_new_as_number(number_val);
             break;
         }
-        case cjson_bool_token: {
-            const bool bool_value = strcmp(token->data, "true") == 0;
-            value = cjson_value_new_as_bool(bool_value);
+        case cjson_true_token: {
+            value = cjson_value_new_as_bool(true);
+            break;
+        }
+        case cjson_false_token: {
+            value = cjson_value_new_as_bool(false);
             break;
         }
         case cjson_left_brace_token: {
@@ -362,11 +417,32 @@ CJsonValue* cjson_read_value(TokenizerContext* ctx) {
         default:
             break;
     }
-    token_free(token);
+    if(value == NULL) {
+
+    }
     return value;
 }
 
+CJsonValue* cjson_read_impl(char* data) {
+    TokenizerContext* ctx = tokenizer_new(data, k_default_buffer_size);
+    CJsonValue* value = cjson_read_value(ctx);
+    tokenizer_free(ctx);
+    return value;
+}
+
+CJsonValue* cjson_read_test(char* data) {
+    TokenizerContext* ctx = tokenizer_new(data, k_default_buffer_size);
+    for(;;) {
+        Token* token = tokenizer_consume_next(ctx);
+        token_print(token);
+        if(token == NULL) {
+            break;
+        }
+    }
+    return NULL;
+}
+
 CJsonValue* cjson_read(char* data) {
-    TokenizerContext* ctx = tokenizer_new(data);
-    return cjson_read_value(ctx);
+    return cjson_read_impl(data);
+    //return cjson_read_test(data);
 }

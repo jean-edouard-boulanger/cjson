@@ -7,9 +7,9 @@
 
 void register_cases(Suite* suite)
 {
-    str_case_setup(suite);
+    //str_case_setup(suite);
     reader_case_setup(suite);
-    object_case_setup(suite);
+    //object_case_setup(suite);
 }
 
 int main(int argc, char** argv) {
@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
     register_cases(suite);
 
     SRunner* runner = srunner_create(suite);
+    srunner_set_fork_status(runner, CK_NOFORK);
     srunner_run_all(runner, CK_VERBOSE);
     const size_t failed = srunner_ntests_failed(runner);
     srunner_free(runner);

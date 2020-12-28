@@ -25,6 +25,7 @@ CJsonStr* cjson_str_new_from_raw(const char* cstr);
 CJsonStr* cjson_str_new_of_size(size_t size, char c);
 CJsonStr* cjson_str_new(void);
 CJsonStr* cjson_str_copy(const CJsonStr* this);
+char* cjson_raw_str_copy(const char* this);
 void cjson_str_free(CJsonStr* this);
 
 void cjson_str_clear(CJsonStr* this);

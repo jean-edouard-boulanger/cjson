@@ -231,6 +231,7 @@ bool cjson_value_equals(const CJsonValue* this, const CJsonValue* other) {
         case cjson_bool_value: return this->_bool == other->_bool;
         case cjson_number_value: return this->_number == other->_number;
     }
+    return false;
 }
 
 void cjson_bool_fmt(CJsonStringStream* stream, const bool* const val) {
@@ -248,7 +249,7 @@ void cjson_null_fmt(CJsonStringStream* stream) {
 
 void cjson_number_fmt(CJsonStringStream* stream, const double* val) {
     const size_t buffer_sz = snprintf(NULL, 0, "%f", *val);
-    char* buffer = malloc(buffer_sz * sizeof(char));
+    char* buffer = malloc((buffer_sz + 1) * sizeof(char));
     CJSON_CHECK_ALLOC(buffer);
     sprintf(buffer, "%f", *val);
     cjson_string_stream_write(stream, buffer);

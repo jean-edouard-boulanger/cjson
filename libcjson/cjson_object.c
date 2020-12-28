@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+
 const size_t k_default_hash_table_size = 16;
 
 size_t hash_func(const char* key) {
@@ -36,8 +37,7 @@ typedef struct CJsonObjectNode {
 
 CJsonObjectNode* cjson_object_node_new(const char* key, CJsonValue* val, CJsonObjectNode** block_ref) {
     CJsonObjectNode* node = (CJsonObjectNode*) malloc(sizeof(CJsonObjectNode));
-    node->key = (char*) malloc((strlen(key) + 1) * sizeof(char));
-    strcpy(node->key, key);
+    node->key = cjson_raw_str_copy(key);
     node->val = val;
     node->next = NULL;
     node->block_ref = block_ref;
