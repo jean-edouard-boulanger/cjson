@@ -3,6 +3,7 @@
 #include "test_str.h"
 #include "test_reader.h"
 #include "test_object.h"
+#include "test_string_stream.h"
 
 
 void register_cases(Suite* suite)
@@ -10,6 +11,7 @@ void register_cases(Suite* suite)
     str_case_setup(suite);
     reader_case_setup(suite);
     object_case_setup(suite);
+    string_stream_case_setup(suite);
 }
 
 int main(int argc, char** argv) {

@@ -6,7 +6,8 @@ if(BUILD_TESTS)
             helpers.c
             test_str.c
             test_reader.c
-            test_object.c)
+            test_object.c
+            test_string_stream.c)
     target_include_directories(unit_tests PRIVATE ${CHECK_INCLUDE_DIRS})
     target_link_directories(unit_tests PRIVATE ${CHECK_LIBRARY_DIRS})
     target_link_libraries(unit_tests cjson ${CHECK_LIBRARIES})

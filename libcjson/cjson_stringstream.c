@@ -93,12 +93,13 @@ void cjson_impl_string_stream_write_bytes(CJsonImplStringStream* this, const cha
 }
 
 void cjson_impl_string_stream_write_double(CJsonImplStringStream* this, const double* val) {
-    const size_t total_bytes = snprintf(this->format_buffer->buffer, this->format_buffer->size, "%f", *val) + 1;
-    if(total_bytes > this->format_buffer->size) {
-        cjson_buffer_resize(this->format_buffer, total_bytes);
-        sprintf(this->format_buffer->buffer, "%f", *val);
+    CJsonBuffer* buffer = this->format_buffer;
+    const size_t total_bytes = snprintf(buffer->buffer, buffer->size, "%.8f", *val) + 1;
+    if(total_bytes > buffer->size) {
+        cjson_buffer_resize(buffer, total_bytes);
+        sprintf(buffer->buffer, "%f", *val);
     }
-    cjson_impl_string_stream_write_bytes(this, this->format_buffer->buffer, total_bytes);
+    cjson_impl_string_stream_write_bytes(this, buffer->buffer, total_bytes);
 }
 
 size_t cjson_impl_string_stream_size(const CJsonImplStringStream* const this) {
@@ -139,10 +140,12 @@ void cjson_string_stream_free(CJsonStringStream* this) {
 }
 
 void cjson_string_stream_write_bytes(CJsonStringStream* this, const char* data, size_t bytes) {
+    if(data == NULL) { return; }
     cjson_impl_string_stream_write_bytes(this->_impl, data, bytes);
 }
 
 void cjson_string_stream_write(CJsonStringStream* this, const char* data) {
+    if(data == NULL) { return; }
     cjson_string_stream_write_bytes(this, data, strlen(data));
 }
 
