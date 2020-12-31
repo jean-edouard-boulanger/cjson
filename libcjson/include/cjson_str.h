@@ -16,16 +16,20 @@
 #include <stdbool.h>
 
 
+typedef struct CJsonAllocator CJsonAllocator;
+
 typedef struct CJsonStr {
     char* _data;
     size_t _size;
+
+    struct CJsonAllocator* _allocator;
 } CJsonStr;
 
-CJsonStr* cjson_str_new_from_raw(const char* cstr);
-CJsonStr* cjson_str_new_of_size(size_t size, char c);
-CJsonStr* cjson_str_new(void);
+CJsonStr* cjson_str_new_from_raw(const char* cstr, CJsonAllocator* allocator);
+CJsonStr* cjson_str_new_of_size(size_t size, char c, CJsonAllocator* allocator);
+CJsonStr* cjson_str_new(CJsonAllocator* allocator);
 CJsonStr* cjson_str_copy(const CJsonStr* this);
-char* cjson_raw_str_copy(const char* this);
+char* cjson_raw_str_copy(const char* this, CJsonAllocator* allocator);
 void cjson_str_free(CJsonStr* this);
 
 void cjson_str_clear(CJsonStr* this);
@@ -55,6 +59,7 @@ CJsonStr* cjson_str_concat(const CJsonStr* s1, const CJsonStr* s2);
 void cjson_str_fmt(CJsonStringStream* stream, const CJsonStr* this);
 void cjson_raw_str_fmt(CJsonStringStream* stream, const char* str);
 
-#define CJSON_STR(x) cjson_str_new_from_raw(x)
+#define CJSON_STR_A(s, allocator) (cjson_str_new_from_raw(s, allocator))
+#define CJSON_STR(s) CJSON_STR_A(s, NULL)
 
 #endif /* cjson_str_h */

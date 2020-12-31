@@ -5,13 +5,14 @@
 #include "helpers.h"
 #include "test_object.h"
 
+#include <cjson_allocator.h>
 #include <cjson_object.h>
 #include <cjson_value.h>
 #include <cjson_str.h>
 
 
 START_TEST(test_new) {
-    CJsonObject* obj = cjson_object_new();
+    CJsonObject* obj = cjson_object_new(NULL);
     ck_assert_ptr_nonnull(obj);
     ck_assert_int_eq(cjson_object_size(obj), 0);
 
@@ -40,7 +41,7 @@ START_TEST(test_new_dsl) {
 }
 
 START_TEST(test_set_get) {
-    CJsonObject* obj = cjson_object_new();
+    CJsonObject* obj = cjson_object_new(NULL);
     ck_assert_ptr_nonnull(obj);
 
     CJsonValue* val0 = cjson_object_get(obj, "missing");
@@ -58,7 +59,7 @@ START_TEST(test_set_get) {
 }
 
 START_TEST(test_set_get_overwrite) {
-    CJsonObject* obj = cjson_object_new();
+    CJsonObject* obj = cjson_object_new(NULL);
     ck_assert_ptr_nonnull(obj);
 
     CJsonValue* val1 = CJSON_STR_V("json");
@@ -88,7 +89,7 @@ START_TEST(test_has) {
 }
 
 START_TEST(test_size) {
-    CJsonObject* obj = cjson_object_new();
+    CJsonObject* obj = cjson_object_new(NULL);
     ck_assert_ptr_nonnull(obj);
     ck_assert_int_eq(cjson_object_size(obj), 0);
 
@@ -171,7 +172,7 @@ START_TEST(test_foreach) {
     );
     ck_assert_ptr_nonnull(obj);
 
-    CJsonStringStream* stream = cjson_string_stream_new();
+    CJsonStringStream* stream = cjson_string_stream_new(NULL);
     ck_assert_ptr_nonnull(stream);
 
     size_t loops = 0;
@@ -202,7 +203,7 @@ START_TEST(test_foreach) {
     ck_assert_ptr_nonnull(strstr(buff, "key3=value3/"));
 
     cjson_object_free(obj);
-    free(buff);
+    cjson_dealloc(NULL, buff);
 }
 
 START_TEST(test_foreach_item) {
@@ -213,7 +214,7 @@ START_TEST(test_foreach_item) {
     );
     ck_assert_ptr_nonnull(obj);
 
-    CJsonStringStream* stream = cjson_string_stream_new();
+    CJsonStringStream* stream = cjson_string_stream_new(NULL);
     ck_assert_ptr_nonnull(stream);
 
     size_t loops = 0;
@@ -239,7 +240,7 @@ START_TEST(test_foreach_item) {
     ck_assert_ptr_nonnull(strstr(buff, "key3=value3/"));
 
     cjson_object_free(obj);
-    free(buff);
+    cjson_dealloc(NULL, buff);
 }
 
 START_TEST(test_foreach_key) {
@@ -250,7 +251,7 @@ START_TEST(test_foreach_key) {
     );
     ck_assert_ptr_nonnull(obj);
 
-    CJsonStringStream* stream = cjson_string_stream_new();
+    CJsonStringStream* stream = cjson_string_stream_new(NULL);
     ck_assert_ptr_nonnull(stream);
 
     size_t loops = 0;
@@ -272,7 +273,7 @@ START_TEST(test_foreach_key) {
     ck_assert_ptr_nonnull(strstr(buff, "key3/"));
 
     cjson_object_free(obj);
-    free(buff);
+    cjson_dealloc(NULL, buff);
 }
 
 START_TEST(test_foreach_value) {
@@ -283,7 +284,7 @@ START_TEST(test_foreach_value) {
     );
     ck_assert_ptr_nonnull(obj);
 
-    CJsonStringStream* stream = cjson_string_stream_new();
+    CJsonStringStream* stream = cjson_string_stream_new(NULL);
     ck_assert_ptr_nonnull(stream);
 
     size_t loops = 0;
@@ -304,7 +305,7 @@ START_TEST(test_foreach_value) {
     ck_assert_ptr_nonnull(strstr(buff, "value3/"));
 
     cjson_object_free(obj);
-    free(buff);
+    cjson_dealloc(NULL, buff);
 }
 
 void object_case_setup(Suite* suite) {

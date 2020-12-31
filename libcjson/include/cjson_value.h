@@ -14,11 +14,11 @@
 #include <stdbool.h>
 
 
-typedef struct CJsonNull CJsonNull;
 typedef struct CJsonObject CJsonObject;
 typedef struct CJsonArray CJsonArray;
 typedef struct CJsonStr CJsonStr;
 typedef struct CJsonStringStream CJsonStringStream;
+typedef struct CJsonAllocator CJsonAllocator;
 
 typedef enum {
     cjson_null_value = 0,
@@ -31,7 +31,6 @@ typedef enum {
 
 typedef struct CJsonValue {
     union {
-        struct CJsonNull* _null;
         struct CJsonObject* _object;
         struct CJsonArray* _array;
         struct CJsonStr* _str;
@@ -39,15 +38,16 @@ typedef struct CJsonValue {
         double _number;
     };
     CJsonValueType _type;
+    CJsonAllocator* _allocator;
 } CJsonValue;
 
-CJsonValue* cjson_value_new(void);
-CJsonValue* cjson_value_new_as_null(void);
-CJsonValue* cjson_value_new_as_object(CJsonObject* object);
-CJsonValue* cjson_value_new_as_array(CJsonArray* array);
-CJsonValue* cjson_value_new_as_str(CJsonStr* str);
-CJsonValue* cjson_value_new_as_bool(bool val);
-CJsonValue* cjson_value_new_as_number(double val);
+CJsonValue* cjson_value_new(CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_null(CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_object(CJsonObject* object, CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_array(CJsonArray* array, CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_str(CJsonStr* str, CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_bool(bool val, CJsonAllocator* allocator);
+CJsonValue* cjson_value_new_as_number(double val, CJsonAllocator* allocator);
 CJsonValue* cjson_value_copy(const CJsonValue* this);
 void cjson_value_free(CJsonValue* this);
 void cjson_value_reset(CJsonValue* this);
@@ -80,18 +80,28 @@ void cjson_number_fmt(CJsonStringStream* stream, const double* val);
 void cjson_value_fmt(CJsonStringStream* stream, const CJsonValue* this);
 void cjson_null_fmt(CJsonStringStream* stream);
 
-#define CJSON_NULL_V (cjson_value_new_as_null())
-#define CJSON_BOOL_V(x) (cjson_value_new_as_bool(x))
-#define CJSON_TRUE_V CJSON_BOOL_V(true)
-#define CJSON_FALSE_V CJSON_BOOL_V(false)
-#define CJSON_NUMBER_V(x) (cjson_value_new_as_number(x))
-#define CJSON_STR_V(x) (cjson_value_new_as_str(CJSON_STR(x)))
-#define CJSON_EMPTY_ARRAY_V (cjson_value_new_as_array(CJSON_EMPTY_ARRAY))
-#define CJSON_ARRAY_V(...)\
-    (cjson_value_new_as_array(CJSON_ARRAY(__VA_ARGS__)))
-#define CJSON_EMPTY_OBJECT_V (cjson_value_new_as_object(CJSON_EMPTY_OBJECT))
-#define CJSON_OBJECT_V(...)\
-    (cjson_value_new_as_object(CJSON_OBJECT(__VA_ARGS__)))
+#define CJSON_NULL_V_A(allocator) (cjson_value_new_as_null(allocator))
+#define CJSON_NULL_V CJSON_NULL_V_A(NULL)
+#define CJSON_BOOL_V_A(x, allocator) (cjson_value_new_as_bool(x, allocator))
+#define CJSON_BOOL_V(x) CJSON_BOOL_V_A(x, NULL)
+#define CJSON_TRUE_V_A(allocator) CJSON_BOOL_V_A(true, allocator)
+#define CJSON_TRUE_V CJSON_TRUE_V_A(NULL)
+#define CJSON_FALSE_V_A(allocator) CJSON_BOOL_V_A(false, allocator)
+#define CJSON_FALSE_V CJSON_FALSE_V_A(NULL)
+#define CJSON_NUMBER_V_A(x, allocator) (cjson_value_new_as_number(x, allocator))
+#define CJSON_NUMBER_V(x) CJSON_NUMBER_V_A(x, NULL)
+#define CJSON_STR_V_A(x, allocator) (cjson_value_new_as_str(CJSON_STR(x), allocator))
+#define CJSON_STR_V(x) CJSON_STR_V_A(x, NULL)
+#define CJSON_EMPTY_ARRAY_V_A(allocator) (cjson_value_new_as_array(CJSON_EMPTY_ARRAY_A(allocator), allocator))
+#define CJSON_EMPTY_ARRAY_V CJSON_EMPTY_ARRAY_V_A(NULL)
+#define CJSON_ARRAY_V_A(allocator, ...)\
+    (cjson_value_new_as_array(CJSON_ARRAY_A(allocator, __VA_ARGS__), allocator))
+#define CJSON_ARRAY_V(...) CJSON_ARRAY_V_A(NULL, __VA_ARGS__)
+#define CJSON_EMPTY_OBJECT_V_A(allocator) (cjson_value_new_as_object(CJSON_EMPTY_OBJECT_A(allocator), allocator))
+#define CJSON_EMPTY_OBJECT_V CJSON_EMPTY_OBJECT_V_A(NULL)
+#define CJSON_OBJECT_V_A(allocator, ...)\
+    (cjson_value_new_as_object(CJSON_OBJECT_A(allocator, __VA_ARGS__), allocator))
+#define CJSON_OBJECT_V(...) CJSON_OBJECT_V_A(NULL, __VA_ARGS__)
 
 #define CJSON_AS_BOOL(v) (cjson_value_get_bool(v))
 #define CJSON_AS_NUMBER(v) (cjson_value_get_number(v))

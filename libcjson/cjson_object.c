@@ -10,6 +10,7 @@
 #include "cjson_object.h"
 #include "cjson_str.h"
 #include "cjson_value.h"
+#include "cjson_allocator.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,25 +31,27 @@ size_t hash_func(const char* key) {
 typedef struct CJsonObjectNode {
     char* key;
     CJsonValue* val;
-
     CJsonObjectNode* next;
     CJsonObjectNode** block_ref;
+    CJsonAllocator* allocator;
 } CJsonObjectNode;
 
-CJsonObjectNode* cjson_object_node_new(const char* key, CJsonValue* val, CJsonObjectNode** block_ref) {
-    CJsonObjectNode* node = (CJsonObjectNode*) malloc(sizeof(CJsonObjectNode));
-    node->key = cjson_raw_str_copy(key);
+CJsonObjectNode* cjson_object_node_new(const char* key, CJsonValue* val, CJsonObjectNode** block_ref, CJsonAllocator* allocator) {
+    CJsonObjectNode* node = (CJsonObjectNode*) cjson_alloc(allocator, sizeof(CJsonObjectNode));
+    node->key = (char*) cjson_alloc(allocator, (strlen(key) + 1) * sizeof(char));
+    strcpy(node->key, key);
     node->val = val;
     node->next = NULL;
     node->block_ref = block_ref;
+    node->allocator = allocator;
     return node;
 }
 
 void cjson_object_node_free(CJsonObjectNode* this) {
     if(this == NULL) { return; }
-    free(this->key);
+    cjson_dealloc(this->allocator, this->key);
     cjson_value_free(this->val);
-    free(this);
+    cjson_dealloc(this->allocator, this);
 }
 
 void cjson_object_node_free_block(CJsonObjectNode* this) {
@@ -63,14 +66,11 @@ void cjson_object_node_insert(CJsonObjectNode* this, const char* key, struct CJs
         current = current->next;
     }
     if(strcmp(current->key, key) == 0) {
-        free(current->key);
-        current->key = (char*) malloc((strlen(key) + 1) * sizeof(char));
-        strcpy(current->key, key);
         cjson_value_free(current->val);
         current->val = val;
     }
     else {
-        current->next = cjson_object_node_new(key, val, current->block_ref);
+        current->next = cjson_object_node_new(key, val, current->block_ref, this->allocator);
     }
 }
 
@@ -96,22 +96,22 @@ bool cjson_impl_object_is_end_marker(CJsonObjectNode* node) {
     return node->val == NULL && node->block_ref == NULL;
 }
 
-CJsonObjectNode* cjson_impl_object_end_marker_new() {
-    return cjson_object_node_new("", NULL, NULL);
+CJsonObjectNode* cjson_impl_object_end_marker_new(CJsonAllocator* allocator) {
+    return cjson_object_node_new("", NULL, NULL, allocator);
 }
 
 size_t cjson_impl_object_get_block(CJsonObject* this, const char* key) {
     return hash_func(key) % this->_slots;
 }
 
-CJsonObject* cjson_object_new() {
-    CJsonObject* obj = (CJsonObject*) malloc(sizeof(CJsonObject));
+CJsonObject* cjson_object_new(CJsonAllocator* allocator) {
+    allocator = cjson_allocator_or_default(allocator);
+    CJsonObject* obj = (CJsonObject*) cjson_alloc(allocator, sizeof(CJsonObject));
     obj->_slots = k_default_hash_table_size;
-    obj->_data = (CJsonObjectNode**) malloc((obj->_slots + 1) * sizeof(CJsonObjectNode*));
-    for(size_t i = 0; i != obj->_slots; ++i) {
-        obj->_data[i] = NULL;
-    }
-    obj->_data[obj->_slots] = cjson_impl_object_end_marker_new();
+    obj->_data = (CJsonObjectNode**) cjson_alloc(allocator, (obj->_slots + 1) * sizeof(CJsonObjectNode*));
+    obj->_allocator = allocator;
+    memset(obj->_data, 0, (obj->_slots + 1) * sizeof(CJsonObjectNode*));
+    obj->_data[obj->_slots] = cjson_impl_object_end_marker_new(obj->_allocator);
     return obj;
 }
 
@@ -119,12 +119,12 @@ void cjson_object_free(CJsonObject* this) {
     for(size_t i = 0; i != this->_slots; ++i) {
         cjson_object_node_free_block(this->_data[i]);
     }
-    free(this->_data);
-    free(this);
+    cjson_dealloc(this->_allocator, this->_data);
+    cjson_dealloc(this->_allocator, this);
 }
 
 CJsonObject* cjson_object_copy(CJsonObject* this) {
-    CJsonObject* new_obj = cjson_object_new();
+    CJsonObject* new_obj = cjson_object_new(this->_allocator);
     CJSON_OBJECT_FOREACH_ITEM(this, key, val) {
         cjson_object_set(new_obj, key, cjson_value_copy(val));
     }
@@ -135,7 +135,7 @@ void cjson_object_set(CJsonObject* this, const char* key, CJsonValue* val) {
     const size_t slot = cjson_impl_object_get_block(this, key);
     CJsonObjectNode* obj = this->_data[slot];
     if(obj == NULL) {
-        this->_data[slot] = cjson_object_node_new(key, val, this->_data + slot);
+        this->_data[slot] = cjson_object_node_new(key, val, this->_data + slot, this->_allocator);
         return;
     }
     cjson_object_node_insert(obj, key, val);
@@ -252,9 +252,9 @@ void cjson_object_fmt(CJsonStringStream* stream, CJsonObject* this) {
     cjson_string_stream_write(stream, "}");
 }
 
-CJsonObject* cjson_impl_object_builder(size_t items, ...) {
+CJsonObject* cjson_impl_object_builder(CJsonAllocator* allocator, size_t items, ...) {
     CJSON_ASSERT_MSG(cjson_mod((int)items, 2) == 0, "bad object construction");
-    CJsonObject* object = cjson_object_new();
+    CJsonObject* object = cjson_object_new(allocator);
     va_list ap;
     va_start(ap, items);
     char* key = NULL;

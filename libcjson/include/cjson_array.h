@@ -17,14 +17,16 @@
 
 
 typedef struct CJsonValue CJsonValue;
+typedef struct CJsonAllocator CJsonAllocator;
 
 typedef struct CJsonArray {
     CJsonValue** _data;
     size_t _size;
     size_t _capacity;
+    CJsonAllocator* _allocator;
 } CJsonArray;
 
-CJsonArray* cjson_array_new(void);
+CJsonArray* cjson_array_new(CJsonAllocator* allocator);
 CJsonArray* cjson_array_copy(CJsonArray* this);
 void cjson_array_free(CJsonArray* this);
 
@@ -49,12 +51,14 @@ bool cjson_array_equals(CJsonArray* this, CJsonArray* other);
 
 void cjson_array_fmt(CJsonStringStream* stream, CJsonArray* this);
 
-CJsonArray* cjson_impl_array_builder(size_t items, ...);
+CJsonArray* cjson_impl_array_builder(CJsonAllocator* allocator, size_t items, ...);
 
-#define CJSON_EMPTY_ARRAY cjson_array_new()
-#define CJSON_ARRAY(...)\
-    cjson_impl_array_builder(\
-        CJSON_NUMARGS(__VA_ARGS__), __VA_ARGS__)
+#define CJSON_EMPTY_ARRAY_A(allocator) cjson_array_new(allocator)
+#define CJSON_EMPTY_ARRAY CJSON_EMPTY_ARRAY_A(NULL)
+#define CJSON_ARRAY_A(allocator, ...)\
+    (cjson_impl_array_builder(\
+        allocator, CJSON_NUMARGS(__VA_ARGS__), __VA_ARGS__))
+#define CJSON_ARRAY(...) CJSON_ARRAY_A(__VA_ARGS__)
 
 #define CJSON_IMPL_ARRAY_ITERATOR_NAME CJSON_COMBINE(arr_it_, __LINE__)
 

@@ -6,6 +6,7 @@
 //  Copyright © 2020 Jean-Edouard BOULANGER. All rights reserved.
 //
 
+#include "cjson_allocator.h"
 #include "cjson_array.h"
 #include "cjson_assert.h"
 #include "cjson_object.h"
@@ -17,58 +18,58 @@
 #include <string.h>
 
 
-CJsonValue* cjson_value_new() {
-    CJsonValue* val = (CJsonValue*) malloc(sizeof(CJsonValue));
+CJsonValue* cjson_value_new(CJsonAllocator* allocator) {
+    allocator = cjson_allocator_or_default(allocator);
+    CJsonValue* val = (CJsonValue*) cjson_alloc(allocator, sizeof(CJsonValue));
     val->_type = cjson_null_value;
-    val->_null = NULL;
+    val->_allocator = allocator;
     return val;
 }
 
 void cjson_value_free(CJsonValue* this) {
     cjson_value_reset(this);
-    free(this);
+    cjson_dealloc(this->_allocator, this);
 }
 
-CJsonValue* cjson_value_new_as_null(void) {
-    return cjson_value_new();
+CJsonValue* cjson_value_new_as_null(CJsonAllocator* allocator) {
+    return cjson_value_new(allocator);
 }
 
-CJsonValue* cjson_value_new_as_object(CJsonObject* object) {
-    CJsonValue* val = cjson_value_new();
+CJsonValue* cjson_value_new_as_object(CJsonObject* object, CJsonAllocator* allocator) {
+    CJsonValue* val = cjson_value_new(allocator);
     cjson_value_make_object(val, object);
     return val;
 }
 
-CJsonValue* cjson_value_new_as_array(CJsonArray* array) {
-    CJsonValue* val = cjson_value_new();
+CJsonValue* cjson_value_new_as_array(CJsonArray* array, CJsonAllocator* allocator) {
+    CJsonValue* val = cjson_value_new(allocator);
     cjson_value_make_array(val, array);
     return val;
 }
 
-CJsonValue* cjson_value_new_as_str(CJsonStr* str) {
-    CJsonValue* val = cjson_value_new();
+CJsonValue* cjson_value_new_as_str(CJsonStr* str, CJsonAllocator* allocator) {
+    CJsonValue* val = cjson_value_new(allocator);
     cjson_value_make_str(val, str);
     return val;
 }
 
-CJsonValue* cjson_value_new_as_bool(bool bool_val) {
-    CJsonValue* val = cjson_value_new();
+CJsonValue* cjson_value_new_as_bool(bool bool_val, CJsonAllocator* allocator) {
+    CJsonValue* val = cjson_value_new(allocator);
     cjson_value_make_bool(val, bool_val);
     return val;
 }
 
-CJsonValue* cjson_value_new_as_number(double number_val) {
-    CJsonValue* val = cjson_value_new();
+CJsonValue* cjson_value_new_as_number(double number_val, CJsonAllocator* allocator) {
+    CJsonValue* val = cjson_value_new(allocator);
     cjson_value_make_number(val, number_val);
     return val;
 }
 
 CJsonValue* cjson_value_copy(const CJsonValue* const this) {
-    CJsonValue* val = cjson_value_new();
+    CJsonValue* val = cjson_value_new(this->_allocator);
     val->_type = this->_type;
     switch(val->_type) {
         case cjson_null_value: {
-            val->_null = NULL;
             break;
         }
         case cjson_object_value: {
@@ -108,7 +109,6 @@ void cjson_value_reset(CJsonValue* this) {
         cjson_str_free(this->_str);
         this->_str = NULL;
     }
-    this->_null = NULL;
     this->_type = cjson_null_value;
 }
 
@@ -248,12 +248,7 @@ void cjson_null_fmt(CJsonStringStream* stream) {
 }
 
 void cjson_number_fmt(CJsonStringStream* stream, const double* val) {
-    const size_t buffer_sz = snprintf(NULL, 0, "%f", *val);
-    char* buffer = malloc((buffer_sz + 1) * sizeof(char));
-    CJSON_CHECK_ALLOC(buffer);
-    sprintf(buffer, "%f", *val);
-    cjson_string_stream_write(stream, buffer);
-    free(buffer);
+    cjson_string_stream_write_double(stream, val);
 }
 
 void cjson_value_fmt(CJsonStringStream* stream, const CJsonValue* const this) {

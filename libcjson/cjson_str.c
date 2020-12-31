@@ -6,62 +6,62 @@
 //  Copyright © 2020 Jean-Edouard BOULANGER. All rights reserved.
 //
 
+#include "cjson_allocator.h"
 #include "cjson_assert.h"
 #include "cjson_str.h"
 
 #include <string.h>
 
 
-CJsonStr* cjson_str_new_of_size(size_t size, char c) {
-    CJsonStr* str = (CJsonStr*) malloc(sizeof(CJsonStr));
+CJsonStr* cjson_str_new_of_size(size_t size, char c, CJsonAllocator* allocator) {
+    allocator = cjson_allocator_or_default(allocator);
+    CJsonStr* str = (CJsonStr*) cjson_alloc(allocator, sizeof(CJsonStr));
     CJSON_CHECK_ALLOC(str);
     const size_t buffer_sz = sizeof(char) * (size + 1);
-    str->_data = (char*) malloc(buffer_sz);
+    str->_data = (char*) cjson_alloc(allocator, buffer_sz);
     CJSON_CHECK_ALLOC(str->_data);
     memset(str->_data, c, buffer_sz);
     str->_data[size] = '\0';
     str->_size = size;
+    str->_allocator = allocator;
     return str;
 }
 
-CJsonStr* cjson_str_new() {
-    return cjson_str_new_of_size(0, '\0');
+CJsonStr* cjson_str_new(CJsonAllocator* allocator) {
+    return cjson_str_new_of_size(0, '\0', allocator);
 }
 
-CJsonStr* cjson_str_new_from_raw(const char* const cstr) {
-    CJsonStr* str = cjson_str_new();
-    str->_size = strlen(cstr);
-    if(str->_size > 0) {
-        const size_t buff_sz = sizeof(char) * (str->_size + 1);
-        str->_data = (char*) malloc(buff_sz);
-        memcpy(str->_data, cstr, buff_sz);
-    }
+CJsonStr* cjson_str_new_from_raw(const char* const cstr, CJsonAllocator* allocator) {
+    CJsonStr* str = cjson_str_new_of_size(strlen(cstr), '\0', allocator);
+    const size_t buff_sz = sizeof(char) * (str->_size + 1);
+    memcpy(str->_data, cstr, buff_sz);
     return str;
 }
 
 CJsonStr* cjson_str_copy(const CJsonStr* const this) {
-    CJsonStr* str = cjson_str_new();
-    str->_data = (char*) malloc(this->_size * sizeof(char));
+    CJsonStr* str = cjson_str_new(this->_allocator);
+    str->_data = (char*) cjson_alloc(this->_allocator, this->_size * sizeof(char));
     strcpy(str->_data, this->_data);
     str->_size = this->_size;
     return str;
 }
 
-char* cjson_raw_str_copy(const char* this) {
-    char* buffer = (char*) malloc((strlen(this) + 1) * sizeof(char));
+char* cjson_raw_str_copy(const char* this, CJsonAllocator* allocator) {
+    allocator = cjson_allocator_or_default(allocator);
+    char* buffer = (char*) cjson_alloc(allocator, (strlen(this) + 1) * sizeof(char));
     strcpy(buffer, this);
     return buffer;
 }
 
 void cjson_str_free(CJsonStr* this) {
-    cjson_str_clear(this);
-    free(this);
+    cjson_dealloc(this->_allocator, this->_data);
+    cjson_dealloc(this->_allocator, this);
 }
 
 void cjson_str_append_raw_string(CJsonStr* this, const char* const source) {
     const size_t source_sz = strlen(source);
     if(source_sz == 0) { return; }
-    this->_data = realloc(this->_data, sizeof(char) * (this->_size + source_sz + 1));
+    this->_data = cjson_realloc(this->_allocator, this->_data, sizeof(char) * (this->_size + source_sz + 1));
     CJSON_CHECK_ALLOC(this->_data);
     memcpy(this->_data + this->_size, source, source_sz + 1);
     this->_size += source_sz;
@@ -72,7 +72,7 @@ void cjson_str_append(CJsonStr* this, const CJsonStr* source) {
 }
 
 void cjson_str_clear(CJsonStr* this) {
-    this->_data = realloc(this->_data, sizeof(char));
+    this->_data = cjson_realloc(this->_allocator, this->_data, sizeof(char));
     this->_data[0] = '\0';
     this->_size = 0;
 }
@@ -87,7 +87,7 @@ CJsonStr* cjson_str_substr(const CJsonStr* this, size_t begin, size_t end) {
     CJSON_ASSERT(end >= begin);
     CJSON_ASSERT(begin < this->_size && end <= this->_size);
     const size_t bytes = end - begin;
-    CJsonStr* str = cjson_str_new_of_size(bytes, '\0');
+    CJsonStr* str = cjson_str_new_of_size(bytes, '\0', this->_allocator);
     memcpy(str->_data, this->_data + begin, bytes);
     return str;
 }

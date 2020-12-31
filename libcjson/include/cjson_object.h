@@ -17,6 +17,7 @@
 typedef struct CJsonValue CJsonValue;
 typedef struct CJsonArray CJsonArray;
 typedef struct CJsonStr CJsonStr;
+typedef struct CJsonAllocator CJsonAllocator;
 
 typedef struct CJsonObjectNode CJsonObjectNode;
 typedef CJsonObjectNode* CJsonObjectIterator;
@@ -24,9 +25,10 @@ typedef CJsonObjectNode* CJsonObjectIterator;
 typedef struct CJsonObject {
     CJsonObjectNode** _data;
     size_t _slots;
+    CJsonAllocator* _allocator;
 } CJsonObject;
 
-CJsonObject* cjson_object_new(void);
+CJsonObject* cjson_object_new(CJsonAllocator* allocator);
 CJsonObject* cjson_object_copy(CJsonObject* this);
 void cjson_object_free(CJsonObject* this);
 
@@ -47,12 +49,14 @@ bool cjson_object_equals(CJsonObject* this, CJsonObject* other);
 
 void cjson_object_fmt(CJsonStringStream* stream, CJsonObject* this);
 
-CJsonObject* cjson_impl_object_builder(size_t kvs, ...);
+CJsonObject* cjson_impl_object_builder(CJsonAllocator* allocator, size_t kvs, ...);
 
-#define CJSON_EMPTY_OBJECT cjson_object_new()
-#define CJSON_OBJECT(...) \
-    cjson_impl_object_builder( \
-        CJSON_NUMARGS(__VA_ARGS__), __VA_ARGS__)
+#define CJSON_EMPTY_OBJECT_A(allocator) (cjson_object_new(allocator))
+#define CJSON_EMPTY_OBJECT CJSON_EMPTY_OBJECT_A(NULL)
+#define CJSON_OBJECT_A(allocator, ...) \
+    (cjson_impl_object_builder( \
+        allocator, CJSON_NUMARGS(__VA_ARGS__), __VA_ARGS__))
+#define CJSON_OBJECT(...) CJSON_OBJECT_A(NULL, __VA_ARGS__)
 
 #define CJSON_IMPL_OBJECT_ITERATOR_NAME CJSON_COMBINE(obj_it_, __LINE__)
 

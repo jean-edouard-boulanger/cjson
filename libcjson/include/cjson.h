@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 
+#include "cjson_allocator.h"
 #include "cjson_array.h"
 #include "cjson_assert.h"
 #include "cjson_object.h"

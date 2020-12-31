@@ -9,6 +9,7 @@
 #include "cjson_array.h"
 #include "cjson_value.h"
 #include "cjson_assert.h"
+#include "cjson_allocator.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,29 +19,31 @@
 const size_t k_default_capacity = 8;
 const size_t k_capacity_growth_factor = 2;
 
-
-CJsonArray* cjson_array_new() {
-    CJsonArray* array = (CJsonArray*) malloc(sizeof(CJsonArray));
+CJsonArray* cjson_array_new(CJsonAllocator* allocator) {
+    allocator = cjson_allocator_or_default(allocator);
+    CJsonArray* array = (CJsonArray*) cjson_alloc(allocator, sizeof(CJsonArray));
     CJSON_CHECK_ALLOC(array);
+    array->_allocator = allocator;
     array->_size = 0;
     array->_capacity = k_default_capacity;
-    array->_data = (CJsonValue**)malloc(array->_capacity * sizeof(CJsonValue*));
+    array->_data = (CJsonValue**) cjson_alloc(allocator, array->_capacity * sizeof(CJsonValue*));
     CJSON_CHECK_ALLOC(array->_data);
     return array;
 }
 
 void cjson_array_free(CJsonArray* this) {
     cjson_array_clear(this);
-    free(this->_data);
-    free(this);
+    cjson_dealloc(this->_allocator, this->_data);
+    cjson_dealloc(this->_allocator, this);
 }
 
 CJsonArray* cjson_array_copy(CJsonArray* this) {
-    CJsonArray* array = (CJsonArray*) malloc(sizeof(CJsonArray));
+    CJsonArray* array = (CJsonArray*) cjson_alloc(this->_allocator, sizeof(CJsonArray));
     CJSON_CHECK_ALLOC(array);
     array->_size = this->_size;
     array->_capacity = this->_capacity;
-    array->_data = (CJsonValue**)malloc(array->_capacity * sizeof(CJsonValue*));
+    array->_data = (CJsonValue**)cjson_alloc(this->_allocator, array->_capacity * sizeof(CJsonValue*));
+    array->_allocator = this->_allocator;
     CJSON_CHECK_ALLOC(array->_data);
     for(size_t i = 0; i != array->_size; ++i) {
         array->_data[i] = cjson_value_copy(this->_data[i]);
@@ -64,7 +67,7 @@ void cjson_array_reserve(CJsonArray* this, size_t capacity) {
     if(this->_capacity >= capacity) {
         return;
     }
-    this->_data = realloc(this->_data, capacity * sizeof(CJsonValue*));
+    this->_data = (CJsonValue**) cjson_realloc(this->_allocator, this->_data, capacity * sizeof(CJsonValue*));
     CJSON_CHECK_ALLOC(this->_data);
     this->_capacity = capacity;
 }
@@ -157,8 +160,8 @@ void cjson_array_fmt(CJsonStringStream* stream, CJsonArray* this) {
     cjson_string_stream_write(stream, "]");
 }
 
-CJsonArray* cjson_impl_array_builder(size_t items, ...) {
-    CJsonArray* array = cjson_array_new();
+CJsonArray* cjson_impl_array_builder(CJsonAllocator* allocator, size_t items, ...) {
+    CJsonArray* array = cjson_array_new(allocator);
     va_list ap;
     va_start(ap, items);
     for(size_t i = 0; i < items; ++i) {

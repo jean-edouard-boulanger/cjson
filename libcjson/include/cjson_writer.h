@@ -11,9 +11,10 @@
 
 
 typedef struct CJsonValue CJsonValue;
+typedef struct CJsonAllocator CJsonAllocator;
 
-void cjson_print(const CJsonValue* value);
+void cjson_print(const CJsonValue* value, CJsonAllocator* allocator);
 
-char* cjson_to_str(const CJsonValue* value);
+char* cjson_to_str(const CJsonValue* value, CJsonAllocator* allocator);
 
 #endif /* cjson_writer_h */

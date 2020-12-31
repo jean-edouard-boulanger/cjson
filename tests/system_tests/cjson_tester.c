@@ -1,8 +1,8 @@
-#include <string.h>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "cjson.h"
 
@@ -28,12 +28,42 @@ int main(int argc, char** argv) {
     const off_t file_len = lseek(fd, 0, SEEK_END);
     char* data = mmap(0, file_len, PROT_READ, MAP_PRIVATE, fd, 0);
 
-    CJsonValue* value = cjson_read(data);
-    if(value == NULL) {
-        fprintf(stderr, "error: could not parse json\n");
-        return 4;
+    CJsonAllocator* allocator = cjson_allocator_stack_new(16 * 1024 * 1024);
+
+    CJsonValue* value = NULL;
+    {
+        clock_t t = clock();
+        value = cjson_read(data, allocator);
+        t = clock() - t;
+        if(value == NULL) {
+            fprintf(stderr, "error: could not parse json\n");
+            return 4;
+        }
+        const double time_taken = ((double)t) / CLOCKS_PER_SEC;
+        printf("parse_time=%fs\n", time_taken);
     }
 
-    //cjson_print(value);
+    {
+        clock_t t = clock();
+        char* result = cjson_to_str(value, allocator);
+        t = clock() - t;
+        if(result == NULL) {
+            fprintf(stderr, "error: could not format json\n");
+            return 4;
+        }
+        const double time_taken = ((double)t) / CLOCKS_PER_SEC;
+        printf("format_time=%fs\n", time_taken);
+        cjson_dealloc(allocator, result);
+    }
+
+    {
+        clock_t t = clock();
+        cjson_value_free(value);
+        t = clock() - t;
+        const double time_taken = ((double)t) / CLOCKS_PER_SEC;
+        printf("cleanup_time=%fs\n", time_taken);
+    }
+
+    cjson_allocator_stack_free(allocator);
     return close(fd);
 }

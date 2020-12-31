@@ -12,6 +12,8 @@
 #include "cjson_value.h"
 
 
-CJsonValue* cjson_read(char* data);
+typedef struct CJsonAllocator CJsonAllocator;
+
+CJsonValue* cjson_read(char* data, CJsonAllocator* allocator);
 
 #endif /* cjson_reader_h */

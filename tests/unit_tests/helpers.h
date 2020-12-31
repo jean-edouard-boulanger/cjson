@@ -10,13 +10,13 @@
 #define START_GOOD_READ_TEST(name, input_value, expected_value) \
     START_TEST(name) { \
         CJsonValue* expected = expected_value; \
-        CJsonValue* actual = cjson_read(input_value); \
+        CJsonValue* actual = cjson_read(input_value, NULL); \
         ck_assert_ptr_nonnull(expected); \
         if(actual == NULL) { \
             ck_abort_msg("failed reading input value: '%s'", input_value); \
         } \
         if(!cjson_value_equals(actual, expected)) { \
-            CJsonStringStream* stream = cjson_string_stream_new(); \
+            CJsonStringStream* stream = cjson_string_stream_new(NULL); \
             cjson_string_stream_write(stream, "expected: "); \
             cjson_value_fmt(stream, expected); \
             cjson_string_stream_write(stream, " got: "); \
@@ -29,9 +29,9 @@
 
 #define START_BAD_READ_TEST(name, input_value) \
     START_TEST(name) { \
-        CJsonValue* result = cjson_read(input_value); \
+        CJsonValue* result = cjson_read(input_value, NULL); \
         if(result != NULL) { \
-            CJsonStringStream* stream = cjson_string_stream_new(); \
+            CJsonStringStream* stream = cjson_string_stream_new(NULL); \
             cjson_string_stream_write(stream, "expected read failure, instead got: "); \
             cjson_value_fmt(stream, result); \
             ck_abort_msg("%s", cjson_string_stream_str(stream)); \
