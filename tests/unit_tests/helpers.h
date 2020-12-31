@@ -12,6 +12,7 @@
         CJsonValue* expected = expected_value; \
         CJsonValue* actual = cjson_read(input_value, NULL); \
         ck_assert_ptr_nonnull(expected); \
+        ck_assert_ptr_nonnull(actual); \
         if(actual == NULL) { \
             ck_abort_msg("failed reading input value: '%s'", input_value); \
         } \

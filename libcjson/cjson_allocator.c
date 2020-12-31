@@ -92,21 +92,14 @@ void cjson_allocator_stack_free(CJsonAllocator* allocator) {
     free(allocator);
 }
 
-CJsonAllocator* cjson_allocator_default_new() {
-    CJsonAllocator* allocator = (CJsonAllocator*) malloc(sizeof(CJsonAllocator));
-    allocator->alloc = cjson_default_alloc;
-    allocator->realloc = cjson_default_realloc;
-    allocator->dealloc = cjson_default_dealloc;
-    allocator->context = NULL;
-    return allocator;
-}
-
 CJsonAllocator* cjson_allocator_get_default() {
-    static CJsonAllocator* s_allocator = NULL;
-    if(s_allocator == NULL) {
-        s_allocator = cjson_allocator_default_new();
-    }
-    return s_allocator;
+    static CJsonAllocator s_allocator = {
+        .alloc = cjson_default_alloc,
+        .realloc = cjson_default_realloc,
+        .dealloc = cjson_default_dealloc,
+        .context = NULL
+    };
+    return &s_allocator;
 }
 
 CJsonAllocator* cjson_allocator_or_default(CJsonAllocator* allocator) {

@@ -16,10 +16,15 @@
 CJsonStr* cjson_str_new_of_size(size_t size, char c, CJsonAllocator* allocator) {
     allocator = cjson_allocator_or_default(allocator);
     CJsonStr* str = (CJsonStr*) cjson_alloc(allocator, sizeof(CJsonStr));
-    CJSON_CHECK_ALLOC(str);
+    if(str == NULL) {
+        return NULL;
+    }
     const size_t buffer_sz = sizeof(char) * (size + 1);
     str->_data = (char*) cjson_alloc(allocator, buffer_sz);
-    CJSON_CHECK_ALLOC(str->_data);
+    if(str->_data == NULL) {
+        cjson_dealloc(allocator, str);
+        return NULL;
+    }
     memset(str->_data, c, buffer_sz);
     str->_data[size] = '\0';
     str->_size = size;
@@ -39,8 +44,7 @@ CJsonStr* cjson_str_new_from_raw(const char* const cstr, CJsonAllocator* allocat
 }
 
 CJsonStr* cjson_str_copy(const CJsonStr* const this) {
-    CJsonStr* str = cjson_str_new(this->_allocator);
-    str->_data = (char*) cjson_alloc(this->_allocator, this->_size * sizeof(char));
+    CJsonStr* str = cjson_str_new_of_size(this->_size, '\0', this->_allocator);
     strcpy(str->_data, this->_data);
     str->_size = this->_size;
     return str;

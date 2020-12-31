@@ -50,7 +50,9 @@ CJsonObjectNode* cjson_object_node_new(const char* key, CJsonValue* val, CJsonOb
 void cjson_object_node_free(CJsonObjectNode* this) {
     if(this == NULL) { return; }
     cjson_dealloc(this->allocator, this->key);
-    cjson_value_free(this->val);
+    if(this->val != NULL) {
+        cjson_value_free(this->val);
+    }
     cjson_dealloc(this->allocator, this);
 }
 
@@ -119,6 +121,7 @@ void cjson_object_free(CJsonObject* this) {
     for(size_t i = 0; i != this->_slots; ++i) {
         cjson_object_node_free_block(this->_data[i]);
     }
+    cjson_object_node_free_block(this->_data[this->_slots]);
     cjson_dealloc(this->_allocator, this->_data);
     cjson_dealloc(this->_allocator, this);
 }

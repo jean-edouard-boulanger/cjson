@@ -17,7 +17,11 @@ jobs:
       - name: Install build dependencies
         run: |
           apt update && apt install sudo
+          sudo apt update
           sudo apt install -y build-essential cmake autoconf libtool libtool-bin pkg-config
+      - name: Install Valgrind
+        run: |
+          sudo apt install -y valgrind
       - name: Install libcheck
         run: |
           cd /tmp
@@ -35,4 +39,7 @@ jobs:
           make
       - name: Run unit tests
         run: |
-          ./cmake-build/tests/unit_tests/unit_tests
+          ./cmake-build/tests/unit_tests/unit_tests --allow-fork
+      - name: Run unit tests (Valgrind)
+        run: |
+          valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./cmake-build/tests/unit_tests/unit_tests --exclude-tags bad

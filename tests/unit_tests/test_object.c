@@ -204,6 +204,7 @@ START_TEST(test_foreach) {
 
     cjson_object_free(obj);
     cjson_dealloc(NULL, buff);
+    cjson_string_stream_free(stream);
 }
 
 START_TEST(test_foreach_item) {
@@ -241,6 +242,7 @@ START_TEST(test_foreach_item) {
 
     cjson_object_free(obj);
     cjson_dealloc(NULL, buff);
+    cjson_string_stream_free(stream);
 }
 
 START_TEST(test_foreach_key) {
@@ -274,6 +276,7 @@ START_TEST(test_foreach_key) {
 
     cjson_object_free(obj);
     cjson_dealloc(NULL, buff);
+    cjson_string_stream_free(stream);
 }
 
 START_TEST(test_foreach_value) {
@@ -306,6 +309,7 @@ START_TEST(test_foreach_value) {
 
     cjson_object_free(obj);
     cjson_dealloc(NULL, buff);
+    cjson_string_stream_free(stream);
 }
 
 void object_case_setup(Suite* suite) {
