@@ -43,3 +43,10 @@ jobs:
       - name: Run unit tests (Valgrind)
         run: |
           valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./cmake-build/tests/unit_tests/unit_tests --exclude-tags bad
+  build-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          push: false
