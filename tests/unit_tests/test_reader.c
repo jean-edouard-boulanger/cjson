@@ -2,7 +2,7 @@
 // Created by Jean-Edouard BOULANGER on 26/12/2020.
 //
 
-#include "test_reader.h"
+#include "cases.h"
 #include "helpers.h"
 
 #include <cjson_reader.h>

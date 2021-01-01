@@ -55,7 +55,7 @@ CJsonObject* cjson_impl_object_builder(CJsonAllocator* allocator, size_t kvs, ..
 #define CJSON_EMPTY_OBJECT CJSON_EMPTY_OBJECT_A(NULL)
 #define CJSON_OBJECT_A(allocator, ...) \
     (cjson_impl_object_builder( \
-        allocator, CJSON_NUMARGS(__VA_ARGS__), __VA_ARGS__))
+        allocator, CJSON_VA_COUNT(__VA_ARGS__), __VA_ARGS__))
 #define CJSON_OBJECT(...) CJSON_OBJECT_A(NULL, __VA_ARGS__)
 
 #define CJSON_IMPL_OBJECT_ITERATOR_NAME CJSON_COMBINE(obj_it_, __LINE__)

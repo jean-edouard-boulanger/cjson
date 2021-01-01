@@ -434,19 +434,6 @@ CJsonValue* cjson_read_impl(char* data, CJsonAllocator* allocator) {
     return value;
 }
 
-CJsonValue* cjson_read_test(char* data, CJsonAllocator* allocator) {
-    TokenizerContext* ctx = tokenizer_new(data, k_default_buffer_size, allocator);
-    for(;;) {
-        Token* token = tokenizer_consume_next(ctx);
-        token_print(token);
-        if(token == NULL) {
-            break;
-        }
-    }
-    return NULL;
-}
-
 CJsonValue* cjson_read(char* data, CJsonAllocator* allocator) {
     return cjson_read_impl(data, allocator);
-    //return cjson_read_test(data);
 }

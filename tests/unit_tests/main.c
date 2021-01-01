@@ -2,10 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "test_str.h"
-#include "test_reader.h"
-#include "test_object.h"
-#include "test_string_stream.h"
+#include "cases.h"
 
 
 char CJSON_SUITE_NAME[] = "cjson";
@@ -49,9 +46,11 @@ size_t read_settings(Settings* settings, int argc, char** argv) {
 
 void register_cases(Suite* suite)
 {
-    str_case_setup(suite);
-    reader_case_setup(suite);
+    array_case_setup(suite);
+    allocator_case_setup(suite);
     object_case_setup(suite);
+    reader_case_setup(suite);
+    str_case_setup(suite);
     string_stream_case_setup(suite);
 }
 

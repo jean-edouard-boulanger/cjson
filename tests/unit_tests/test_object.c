@@ -3,7 +3,7 @@
 //
 
 #include "helpers.h"
-#include "test_object.h"
+#include "cases.h"
 
 #include <cjson_allocator.h>
 #include <cjson_object.h>

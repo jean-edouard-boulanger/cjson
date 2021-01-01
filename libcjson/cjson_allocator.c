@@ -3,37 +3,38 @@
 //
 
 #include "cjson_allocator.h"
+#include "cjson_utils.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 
-void* cjson_default_alloc(void* context, size_t size) {
+void* cjson_default_alloc(CJSON_UNUSED void* context, size_t size) {
     return malloc(size);
 }
 
-void* cjson_default_realloc(void* context, void* address, size_t size) {
+void* cjson_default_realloc(CJSON_UNUSED void* context, void* address, size_t size) {
     return realloc(address, size);
 }
 
-void cjson_default_dealloc(void* context, void* address) {
+void cjson_default_dealloc(CJSON_UNUSED void* context, void* address) {
     free(address);
 }
 
-typedef struct CJsonStackAllocatorContext {
+typedef struct CJsonLinearAllocatorContext {
     void* pool;
     void* head;
     size_t size;
     size_t capacity;
-} CJsonStackAllocatorContext;
+} CJsonLinearAllocatorContext;
 
-typedef struct CJsonStackAllocatorBlockHeader {
+typedef struct CJsonLinearAllocatorBlockHeader {
     void* start_ptr;
     void* end_ptr;
-} CJsonStackAllocatorBlockHeader;
+} CJsonLinearAllocatorBlockHeader;
 
-CJsonStackAllocatorContext* cjson_stack_allocator_context_new(size_t pool_size) {
-    CJsonStackAllocatorContext* this = (CJsonStackAllocatorContext*) malloc(sizeof(CJsonStackAllocatorContext));
+CJsonLinearAllocatorContext* cjson_linear_allocator_context_new(size_t pool_size) {
+    CJsonLinearAllocatorContext* this = (CJsonLinearAllocatorContext*) malloc(sizeof(CJsonLinearAllocatorContext));
     this->pool = malloc(pool_size);
     this->head = this->pool;
     this->size = 0;
@@ -41,29 +42,29 @@ CJsonStackAllocatorContext* cjson_stack_allocator_context_new(size_t pool_size) 
     return this;
 }
 
-void cjson_stack_allocator_context_free(CJsonStackAllocatorContext* this) {
+void cjson_linear_allocator_context_free(CJsonLinearAllocatorContext* this) {
     free(this->pool);
     free(this);
 }
 
-void* cjson_stack_allocator_alloc(void* context, size_t size) {
-    CJsonStackAllocatorContext* this = (CJsonStackAllocatorContext*) context;
-    const size_t block_size = sizeof(CJsonStackAllocatorBlockHeader) + size;
+void* cjson_linear_allocator_alloc(void* context, size_t size) {
+    CJsonLinearAllocatorContext* this = (CJsonLinearAllocatorContext*) context;
+    const size_t block_size = sizeof(CJsonLinearAllocatorBlockHeader) + size;
     if(block_size > (this->capacity - this->size)) { return NULL; }
     void* header_ptr = this->head;
-    void* alloc_ptr = header_ptr + sizeof(CJsonStackAllocatorBlockHeader);
-    CJsonStackAllocatorBlockHeader* block_header = (CJsonStackAllocatorBlockHeader*) header_ptr;
+    void* alloc_ptr = header_ptr + sizeof(CJsonLinearAllocatorBlockHeader);
+    CJsonLinearAllocatorBlockHeader* block_header = (CJsonLinearAllocatorBlockHeader*) header_ptr;
     block_header->start_ptr = alloc_ptr;
     block_header->end_ptr = alloc_ptr + size;
     this->head += block_size;
     return alloc_ptr;
 }
 
-void cjson_stack_allocator_dealloc(void* context, void* address) {}
+void cjson_linear_allocator_dealloc(CJSON_UNUSED void* context, CJSON_UNUSED void* address) {}
 
-void* cjson_stack_allocator_realloc(void* context, void* address, size_t new_size) {
-    CJsonStackAllocatorContext* this = (CJsonStackAllocatorContext*) context;
-    CJsonStackAllocatorBlockHeader* header_ptr = address - sizeof(CJsonStackAllocatorBlockHeader);
+void* cjson_linear_allocator_realloc(void* context, void* address, size_t new_size) {
+    CJsonLinearAllocatorContext* this = (CJsonLinearAllocatorContext*) context;
+    CJsonLinearAllocatorBlockHeader* header_ptr = address - sizeof(CJsonLinearAllocatorBlockHeader);
     const size_t previous_size = header_ptr->end_ptr - header_ptr->start_ptr;
     if(new_size < previous_size) { return header_ptr->start_ptr; }
     else if(this->head == header_ptr->end_ptr) {
@@ -73,22 +74,22 @@ void* cjson_stack_allocator_realloc(void* context, void* address, size_t new_siz
         header_ptr->end_ptr = this->head;
         return header_ptr->start_ptr;
     }
-    void* new_ptr = cjson_stack_allocator_alloc(context, new_size);
+    void* new_ptr = cjson_linear_allocator_alloc(context, new_size);
     memcpy(new_ptr, header_ptr->start_ptr, previous_size);
     return new_ptr;
 }
 
-CJsonAllocator* cjson_allocator_stack_new(size_t size) {
+CJsonAllocator* cjson_linear_allocator_new(size_t size) {
     CJsonAllocator* allocator = (CJsonAllocator*) malloc(sizeof(CJsonAllocator));
-    allocator->alloc = cjson_stack_allocator_alloc;
-    allocator->dealloc = cjson_stack_allocator_dealloc;
-    allocator->realloc = cjson_stack_allocator_realloc;
-    allocator->context = cjson_stack_allocator_context_new(size);
+    allocator->alloc = cjson_linear_allocator_alloc;
+    allocator->dealloc = cjson_linear_allocator_dealloc;
+    allocator->realloc = cjson_linear_allocator_realloc;
+    allocator->context = cjson_linear_allocator_context_new(size);
     return allocator;
 }
 
-void cjson_allocator_stack_free(CJsonAllocator* allocator) {
-    cjson_stack_allocator_context_free((CJsonStackAllocatorContext*) allocator->context);
+void cjson_linear_allocator_free(CJsonAllocator* allocator) {
+    cjson_linear_allocator_context_free((CJsonLinearAllocatorContext *) allocator->context);
     free(allocator);
 }
 

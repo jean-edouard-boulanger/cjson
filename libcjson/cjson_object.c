@@ -87,11 +87,14 @@ size_t cjson_object_node_size(CJsonObjectNode* this) {
 }
 
 CJsonObjectNode* cjson_object_node_find(CJsonObjectNode* this, const char* key) {
-    if(this == NULL) { return NULL; }
-    if(cjson_raw_str_equals(key, this->key)) {
-        return this;
+    CJsonObjectNode* current = this;
+    while(current != NULL) {
+        if(cjson_raw_str_cmp(current->key, key) == cjson_ordering_equal) {
+            return current;
+        }
+        current = current->next;
     }
-    return cjson_object_node_find(this->next, key);
+    return NULL;
 }
 
 bool cjson_impl_object_is_end_marker(CJsonObjectNode* node) {

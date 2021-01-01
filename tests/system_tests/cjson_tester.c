@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     const off_t file_len = lseek(fd, 0, SEEK_END);
     char* data = mmap(0, file_len, PROT_READ, MAP_PRIVATE, fd, 0);
 
-    CJsonAllocator* allocator = cjson_allocator_stack_new(16 * 1024 * 1024);
+    CJsonAllocator* allocator = cjson_linear_allocator_new(16 * 1024 * 1024);
 
     CJsonValue* value = NULL;
     {
@@ -64,6 +64,6 @@ int main(int argc, char** argv) {
         printf("cleanup_time=%fs\n", time_taken);
     }
 
-    cjson_allocator_stack_free(allocator);
+    cjson_linear_allocator_free(allocator);
     return close(fd);
 }

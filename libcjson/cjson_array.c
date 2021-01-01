@@ -22,12 +22,15 @@ const size_t k_capacity_growth_factor = 2;
 CJsonArray* cjson_array_new(CJsonAllocator* allocator) {
     allocator = cjson_allocator_or_default(allocator);
     CJsonArray* array = (CJsonArray*) cjson_alloc(allocator, sizeof(CJsonArray));
-    CJSON_CHECK_ALLOC(array);
+    if(array == NULL) { return NULL; }
     array->_allocator = allocator;
     array->_size = 0;
     array->_capacity = k_default_capacity;
     array->_data = (CJsonValue**) cjson_alloc(allocator, array->_capacity * sizeof(CJsonValue*));
-    CJSON_CHECK_ALLOC(array->_data);
+    if(array->_data == NULL) {
+        cjson_dealloc(allocator, array);
+        return NULL;
+    }
     return array;
 }
 
@@ -39,12 +42,17 @@ void cjson_array_free(CJsonArray* this) {
 
 CJsonArray* cjson_array_copy(CJsonArray* this) {
     CJsonArray* array = (CJsonArray*) cjson_alloc(this->_allocator, sizeof(CJsonArray));
-    CJSON_CHECK_ALLOC(array);
+    if(array == NULL) {
+        return NULL;
+    }
     array->_size = this->_size;
     array->_capacity = this->_capacity;
     array->_data = (CJsonValue**)cjson_alloc(this->_allocator, array->_capacity * sizeof(CJsonValue*));
+    if(array->_data == NULL) {
+        cjson_dealloc(this->_allocator, array);
+        return NULL;
+    }
     array->_allocator = this->_allocator;
-    CJSON_CHECK_ALLOC(array->_data);
     for(size_t i = 0; i != array->_size; ++i) {
         array->_data[i] = cjson_value_copy(this->_data[i]);
     }
@@ -68,14 +76,14 @@ void cjson_array_reserve(CJsonArray* this, size_t capacity) {
         return;
     }
     this->_data = (CJsonValue**) cjson_realloc(this->_allocator, this->_data, capacity * sizeof(CJsonValue*));
-    CJSON_CHECK_ALLOC(this->_data);
+    if(this->_data == NULL) {
+        return;
+    }
     this->_capacity = capacity;
 }
 
 CJsonValue* cjson_array_at(CJsonArray* this, size_t index) {
-    if(index >= this->_size) {
-        return NULL;
-    }
+    CJSON_CONTRACT(index < this->_size);
     return this->_data[index];
 }
 
@@ -107,24 +115,24 @@ bool cjson_array_equals(CJsonArray* this, CJsonArray* other) {
 }
 
 void cjson_array_assign(CJsonArray* this, size_t index, CJsonValue* val) {
-    CJSON_ASSERT(index < this->_size);
+    CJSON_CONTRACT(index < this->_size);
     cjson_value_free(this->_data[index]);
     this->_data[index] = val;
 }
 
 void cjson_array_swap(CJsonArray* this, size_t index, CJsonValue** val) {
-    CJSON_ASSERT(index < this->_size);
+    CJSON_CONTRACT(index < this->_size);
     CJsonValue* tmp = this->_data[index];
     this->_data[index] = *val;
     (*val) = tmp;
 }
 
 void cjson_array_insert(CJsonArray* this, size_t index, CJsonValue* val) {
-    CJSON_ASSERT(index <= this->_size);
+    CJSON_CONTRACT(index <= this->_size);
     if(this->_size == this->_capacity) {
         cjson_array_reserve(this, this->_capacity * k_capacity_growth_factor);
     }
-    CJSON_ASSERT(this->_size < this->_capacity);
+    CJSON_SAFE_ASSERT(this->_size < this->_capacity);
     for(size_t i = this->_size; i != index; --i) {
         this->_data[i] = this->_data[i - 1];
     }
@@ -137,7 +145,7 @@ void cjson_array_push(CJsonArray* this, CJsonValue* val) {
 }
 
 void cjson_array_erase(CJsonArray* this, size_t index) {
-    CJSON_ASSERT(index < this->_size);
+    CJSON_CONTRACT(index < this->_size);
     cjson_value_free(this->_data[index]);
     for(size_t i = index + 1; i != this->_size; ++i) {
         this->_data[i - 1] = this->_data[i];
