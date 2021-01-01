@@ -15,5 +15,4 @@ void reader_case_setup(Suite*);
 void str_case_setup(Suite*);
 void string_stream_case_setup(Suite*);
 
-
 #endif //CJSON_CASES_H

@@ -110,6 +110,8 @@ void array_case_setup(Suite* suite) {
     tcase_add_test(array_case, test_at);
 
     TCase* array_bad_case = tcase_create("array_bad");
+    tcase_set_tags(array_bad_case, "bad");
+
     suite_add_tcase(suite, array_bad_case);
     tcase_add_test_abort(array_bad_case, test_at_out_of_bounds);
 }
