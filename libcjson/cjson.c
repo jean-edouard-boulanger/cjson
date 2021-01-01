@@ -7,8 +7,3 @@
 //
 
 #include "cjson.h"
-
-
-const char* const cjson_version() {
-    return "0.0.1";
-}

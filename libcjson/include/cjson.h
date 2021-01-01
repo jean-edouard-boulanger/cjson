@@ -23,6 +23,6 @@
 #include "cjson_reader.h"
 
 
-const char* const cjson_version(void);
+#define CJSON_VERSION "0.0.1"
 
 #endif /* cjson_h */

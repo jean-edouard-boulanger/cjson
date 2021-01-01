@@ -2,7 +2,7 @@
 // Created by Jean-Edouard BOULANGER on 30/12/2020.
 //
 
-#include "test_string_stream.h"
+#include "cases.h"
 
 #include <cjson_stringstream.h>
 #include <cjson_allocator.h>

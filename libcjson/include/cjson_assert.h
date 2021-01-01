@@ -12,17 +12,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+
+#define CJSON_IMPL_NOOP do {} while(false)
+
 #ifdef CJSON_ENABLE_STACKTRACE
 #define CJSON_DEBUG_STACKTRACE cjson_impl_print_stacktrace()
 #else
-#define CJSON_DEBUG_STACKTRACE do {} while(false)
+#define CJSON_DEBUG_STACKTRACE CJSON_IMPL_NOOP
 #endif
-
-#define CJSON_TRACE \
-    do { \
-        fprintf(stderr, "trace (%s:%d)", __FILE__, __LINE__); \
-        CJSON_DEBUG_STACKTRACE; \
-    } while(false)
 
 #define CJSON_ABORT(...) \
     do { \
@@ -38,11 +35,19 @@
         } \
     } while (false)
 
+#ifndef CJSON_CONTRACT
+#define CJSON_CONTRACT(x) CJSON_ASSERT_MSG(x, "contract violation")
+#endif
+
+#ifndef CJSON_ASSERT
 #define CJSON_ASSERT(x) CJSON_ASSERT_MSG(x, "assertion failed")
+#endif
 
-#define CJSON_CHECK_ALLOC(x) CJSON_ASSERT_MSG(x != NULL, "bad alloc")
-
-#define CJSON_NOT_IMPLEMENTED CJSON_ABORT("not implemented: %s\n", __func__)
+#ifdef CJSON_ENABLE_SAFE_ASSERTS
+#define CJSON_SAFE_ASSERT(x) CJSON_ASSERT(x)
+#else
+#define CJSON_SAFE_ASSERT(x) CJSON_IMPL_NOOP
+#endif
 
 #define CJSON_STATIC_ASSERT(x) _Static_assert(x, "static assertion failed: " #x)
 

@@ -11,7 +11,9 @@
 
 #include <stdarg.h>
 
-#define CJSON_NUMARGS(...) (sizeof((void*[]){__VA_ARGS__})/sizeof(void*))
+#define CJSON_UNUSED __attribute__((unused))
+
+#define CJSON_VA_COUNT(...) (sizeof((void*[]){__VA_ARGS__})/sizeof(void*))
 
 #define CJSON_COMBINE(x, y) x ## y
 

@@ -8,13 +8,11 @@
 
 #include "cjson_allocator.h"
 #include "cjson_array.h"
-#include "cjson_assert.h"
 #include "cjson_object.h"
 #include "cjson_str.h"
 #include "cjson_stringstream.h"
 #include "cjson_value.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 

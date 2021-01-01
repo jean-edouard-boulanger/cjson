@@ -2,8 +2,8 @@
 // Created by Jean-Edouard BOULANGER on 26/12/2020.
 //
 
-#include "test_str.h"
 #include "helpers.h"
+#include "cases.h"
 
 #include <cjson_allocator.h>
 #include <cjson_str.h>
@@ -311,13 +311,13 @@ void str_case_setup(Suite* suite) {
     tcase_add_test(str_case, test_contains_raw);
     tcase_add_test(str_case, test_contains);
 
-    TCase* str_case_bad = tcase_create("str_bad");
-    tcase_set_tags(str_case_bad, "bad");
-    suite_add_tcase(suite, str_case_bad);
+    TCase* str_bad_case = tcase_create("str_bad");
+    tcase_set_tags(str_bad_case, "bad");
+    suite_add_tcase(suite, str_bad_case);
 
-    tcase_add_test_abort(str_case_bad, test_at_out_of_bounds);
-    tcase_add_test_abort(str_case_bad, test_substr_out_of_bounds);
-    tcase_add_test_abort(str_case_bad, test_pop_back_empty_string);
-    tcase_add_test_abort(str_case_bad, test_front_empty_string);
-    tcase_add_test_abort(str_case_bad, test_back_empty_string);
+    tcase_add_test_abort(str_bad_case, test_at_out_of_bounds);
+    tcase_add_test_abort(str_bad_case, test_substr_out_of_bounds);
+    tcase_add_test_abort(str_bad_case, test_pop_back_empty_string);
+    tcase_add_test_abort(str_bad_case, test_front_empty_string);
+    tcase_add_test_abort(str_bad_case, test_back_empty_string);
 }

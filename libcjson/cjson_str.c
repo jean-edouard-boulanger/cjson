@@ -66,7 +66,9 @@ void cjson_str_append_raw_string(CJsonStr* this, const char* const source) {
     const size_t source_sz = strlen(source);
     if(source_sz == 0) { return; }
     this->_data = cjson_realloc(this->_allocator, this->_data, sizeof(char) * (this->_size + source_sz + 1));
-    CJSON_CHECK_ALLOC(this->_data);
+    if(this->_data == NULL) {
+        return;
+    }
     memcpy(this->_data + this->_size, source, source_sz + 1);
     this->_size += source_sz;
 }
@@ -153,17 +155,17 @@ char* cjson_str_raw(const CJsonStr* const this) {
 }
 
 char cjson_str_at(const CJsonStr* const this, size_t index) {
-    CJSON_ASSERT(index < this->_size);
+    CJSON_CONTRACT(index < this->_size);
     return this->_data[index];
 }
 
 char cjson_str_front(const CJsonStr* const this) {
-    CJSON_ASSERT(this->_size > 0);
+    CJSON_CONTRACT(this->_size > 0);
     return this->_data[0];
 }
 
 char cjson_str_back(const CJsonStr* const this) {
-    CJSON_ASSERT(this->_size > 0);
+    CJSON_CONTRACT(this->_size > 0);
     return this->_data[this->_size - 1];
 }
 

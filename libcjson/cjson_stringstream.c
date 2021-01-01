@@ -48,10 +48,12 @@ size_t string_stream_block_write_bytes(StringStreamBlock* this, const char* data
 
 void string_stream_block_free(StringStreamBlock* this) {
     cjson_dealloc(this->allocator, this->data);
-    if(this->next != NULL) {
-        string_stream_block_free(this->next);
+    StringStreamBlock* current = this;
+    while(current != NULL) {
+        StringStreamBlock* next = current->next;
+        cjson_dealloc(this->allocator, current);
+        current = next;
     }
-    cjson_dealloc(this->allocator, this);
 }
 
 typedef struct CJsonImplStringStream {

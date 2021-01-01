@@ -19,14 +19,14 @@ CJsonAllocator* cjson_allocator_get_default();
 
 CJsonAllocator* cjson_allocator_or_default(CJsonAllocator* allocator);
 
-CJsonAllocator* cjson_allocator_stack_new(size_t size);
+CJsonAllocator* cjson_linear_allocator_new(size_t size);
 
-void cjson_allocator_stack_free(CJsonAllocator* allocator);
+void cjson_linear_allocator_free(CJsonAllocator* allocator);
 
-void* cjson_alloc(CJsonAllocator* this, size_t size);
+void* cjson_alloc(CJsonAllocator* allocator, size_t size);
 
-void* cjson_realloc(CJsonAllocator* this, void* address, size_t size);
+void* cjson_realloc(CJsonAllocator* allocator, void* address, size_t size);
 
-void cjson_dealloc(CJsonAllocator* this, void* address);
+void cjson_dealloc(CJsonAllocator* allocator, void* address);
 
 #endif //CJSON_CJSON_ALLOCATOR_H
